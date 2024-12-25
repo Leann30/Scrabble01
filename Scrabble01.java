@@ -1,10 +1,20 @@
 import java.lang.reflect.Array;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.util.Optional;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
-
+/* 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+*/
 
 class Player01 {
 
@@ -58,7 +68,7 @@ class Scrabble01 implements Clerk{
     
         final String ID;
         final int width, height;
-        final String libPath = "views/TicTacToe/scrabble01.js";
+        final String libPath = "views/Scrabble01/scrabble01.js";
         LiveView view;
 
         final Player01 player1;
@@ -132,34 +142,38 @@ class Scrabble01 implements Clerk{
 
 void turn(){
     this.currentPlayer *= -1;
+    this.tile = ' ';
 }
 
 char getTile(int x, int y){
 
     //Hole Stein für ersten Klick 
     if(x >= 7 && x <= 13 &&  y == 2 && this.currentPlayer > 0){  //auf top tiles geklickt
-        this.tile = player1.bag.get(x-7); 
-    } else if(x >= 7 && x <= 13 &&  y == 2 && this.currentPlayer < 0){  //auf top tiles geklickt
-        this.tile = player2.bag.get(x-7); 
-    } else if(x >= 1 && x <= 7 &&  y == 18 && this.currentPlayer > 0){ //auf bottom tiles 
-        this.tile = player1.bag.get(x);
+        this.tile = player1.bag.get(x-7);
+        Clerk.script(view, "scrabble" + ID + ".removeTile1("+ x + ", '" + y + "');");
     } else if(x >= 1 && x <= 7 &&  y == 18 && this.currentPlayer < 0){ //auf bottom tiles 
-        this.tile = player2.bag.get(x);
-    }
+        this.tile = player2.bag.get(x-1);
+        Clerk.script(view, "scrabble" + ID + ".removeTile2("+ x + ", '" + y + "');");
+    } 
     return this.tile;
 }
 
 void updateBoard(int x, int y){
+
     if((this.tile != ' ')){
         if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer > 0 && (this.board[x][y-3] == "TW" || this.board[x][y-3] == "DW" || this.board[x][y-3] == "TL" || this.board[x][y-3] == "DL" || this.board[x][y-3] == "NaN")){
             Clerk.script(view, "scrabble" + ID + ".setTile1("+ x + ", '" + y + "', '" + this.tile + "');");
             this.board[x][y-3] = "" + this.tile;
-        } else if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer < 0 && (this.board[x][y+3] == "TW" || this.board[x][y+3] == "DW" || this.board[x][y+3] == "TL" || this.board[x][y+3] == "DL" || this.board[x][y+3] == "NaN")){
+            this.tile = ' ';
+
+        } else if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer < 0 && (this.board[x][y-3] == "TW" || this.board[x][y-3] == "DW" || this.board[x][y-3] == "TL" || this.board[x][y-3] == "DL" || this.board[x][y-3] == "NaN")){
             Clerk.script(view, "scrabble" + ID + ".setTile2(" + x + ", '" + y + "', '" + this.tile + "');");
-            this.board[x][y+3] = "" + this.tile;
+            this.board[x][y-3] = "" + this.tile;
+            this.tile = ' ';
         }
     }
 }
+
  
 int updateScore(int x, int y, char currentLetter){
 
@@ -194,7 +208,122 @@ int updateScore(int x, int y, char currentLetter){
     }
     return counter;
 }
+/* 
+void getWords(int i, int j){
+    List<String> currentWords = new ArrayList<>();
+    String currentWord = "";
 
+//MIT TURING ?
+
+    //nach oben laufen
+    while(this.board[i][j] != "TW" && this.board[i][j] != "DW" && this.board[i][j] != "TL" && this.board[i][j] != "DL" && this.board[i][j] != "NaN" && this.board[i][j] != "Br" && j < board.length){
+        j--;
+    }  
+    int highestX = i;
+    int highestY = j;
+    //nach unten laufen 
+    while(this.board[i][j] != "TW" && this.board[i][j] != "DW" && this.board[i][j] != "TL" && this.board[i][j] != "DL" && this.board[i][j] != "NaN" && this.board[i][j] != "Br" && j < board.length){
+        j++;
+        currentWord += this.board[i][j];
+    } 
+    currentWords.add(currentWord);
+     
+    i = highestX;
+    j = highestY;
+    for (int k = 0; k < currentWords.get(0).length(); k++) {
+        
+    }
+    //nach links laufen
+    while(this.board[i][j] != "TW" && this.board[i][j] != "DW" && this.board[i][j] != "TL" && this.board[i][j] != "DL" && this.board[i][j] != "NaN" && i < board.length){
+        i--;
+    }
+    //nach rechts laufen+ wort zusammensetzen
+    while(this.board[i][j] != "TW" && this.board[i][j] != "DW" && this.board[i][j] != "TL" && this.board[i][j] != "DL" && this.board[i][j] != "NaN" && i < board.length){
+    currentWord += this.board[i][j];
+    i++;
+    }
+    currentWords.add(currentWord);
+
+        //setze erstes Wort immer in die Mitte (an gleiche Pos)
+        //gehe von dort aus ganz nach oben bis bed. erfüllt
+        //gehe von jedem Buchstabn des ersten Wortes nach links (bis nach rechts alle Buchstaben hinzufügen)
+        //rechts und links wieder von jedem Buchstaben ganz nach oben und dann unten, wieder rechts und links
+        //komplettes Board durchgehen und alles was nicht dranhängt auf default wert setzen
+
+
+       //Strings müssen richtig aneinander liegen
+       //also vom als erstes gelegten Wort ausgehen, alles andere nicht validieren 
+
+}*/
+
+boolean validateWord(String input) {
+   
+    try {
+        URI uri = URI.create("https://www.dwds.de/api/wb/snippet/?q=" + input);
+        URL url = uri.toURL();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        StringBuilder response = new StringBuilder();
+        String inputLine;
+
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+
+        // JSON als String durchsuchen
+        String jsonResponse = response.toString();
+        return jsonResponse.contains("\"wortart\":") && jsonResponse.contains("\"lemma\":");
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
+    }
+} 
+
+String getRandWord(){
+    //ersten Buchstaben immer an pos [6][3] setzen (oder random i, j?)
+    //Einfach feste Auswahl aus Wörtern nehmen?
+    
+    try {
+        URI uri = URI.create("https://www.dwds.de/api/wb/random");
+        URL url = uri.toURL();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        StringBuilder response = new StringBuilder();
+        String inputLine;
+
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+
+        // JSON als String durchsuchen
+        String jsonResponse = response.toString();
+        String key = "\"lemma\":\"";
+        int startIndex = jsonResponse.indexOf(key);
+        if (startIndex != -1) {
+            startIndex += key.length();
+            int endIndex = jsonResponse.indexOf("\"", startIndex);
+            if (endIndex != -1) {
+                return jsonResponse.substring(startIndex, endIndex);
+            }
+        }
+        return "Lemma not found";
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return "Error fetching word";
+    }
+} 
 
     Scrabble01(LiveView view) { this(view, 600, 600, new Player01(), new Player01()); }
     Scrabble01(int width, int height) { this(Clerk.view(), width, height, new Player01(), new Player01()); }

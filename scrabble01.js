@@ -24,17 +24,19 @@ class Scrabble01{
         this.drawScrabbleField();
         this.drawTilesTop();
         this.drawTilesBottom();
+        this.drawSideBar();
         
         this.boardCanvas.addEventListener("click", (event) => {
             
             let indexY = Math.floor(event.offsetY / this.boardHeight);
             const indexX = Math.floor(event.offsetX / this.boardWidth);
-            if(indexY >= 3){
-                indexY = Math.floor((event.offsetY-8) / this.boardHeight);
-            } else if(indexY > 17){
-                indexY = Math.floor((event.offsetY-16) / this.boardHeight);
+           if (indexY > 17) {
+                indexY = Math.floor((event.offsetY - 16) / this.boardHeight);
+            } else if (indexY >= 3) {
+                indexY = Math.floor((event.offsetY - 8) / this.boardHeight);
             }
             const index = indexX.toString() + "x" + indexY.toString();
+            console.log(`OffsetY: ${event.offsetY}, Calculated indexY: ${indexY}`);
             console.log(`Clicked at X: ${indexX} Y: ${indexY} => ${index}`);
             fetch(endpoint, {method: "post", body: index}).catch(console.log);
         });
@@ -225,5 +227,86 @@ class Scrabble01{
         this.ctxBoard.font = "bold 14px verdana, sans-serif";
         this.ctxBoard.fillStyle = "black";
         this.ctxBoard.fillText(letter, textX, textY);
+    }
+
+    removeTile1(x, y){
+        this.ctxBoard.beginPath();
+        this.ctxBoard.fillStyle = "rgb(128, 128, 128)";
+        this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize, this.squareSize, this.squareSize);
+        this.ctxBoard.strokeStyle = "black"; 
+        this.ctxBoard.lineWidth = 2; 
+        this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize, this.squareSize, this.squareSize);
+    }
+
+    removeTile2(x, y){
+        this.ctxBoard.beginPath();
+        this.ctxBoard.fillStyle = "rgb(128, 128, 128)";
+        this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize + 16, this.squareSize, this.squareSize);
+        this.ctxBoard.strokeStyle = "black"; 
+        this.ctxBoard.lineWidth = 2; 
+        this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize + 16, this.squareSize, this.squareSize);
+    }
+
+    drawSideBar(){
+        let x = 16*this.squareSize;
+        let y = 3*this.squareSize+8;
+        this.ctxBoard.beginPath();
+        this.ctxBoard.fillStyle = "rgb(255, 192, 203)";
+        this.ctxBoard.fillRect(x, y, 3 * this.squareSize, this.squareSize);
+        this.ctxBoard.strokeStyle = "black";
+        this.ctxBoard.strokeRect(x, y, 3 * this.squareSize, this.squareSize);
+        const textX = x + this.squareSize / 3; 
+        let textY = y + (this.squareSize/ 1.5); 
+        this.ctxBoard.font = "bold 14px verdana, sans-serif";
+        this.ctxBoard.fillStyle = "black";
+        this.ctxBoard.fillText("HELP", textX, textY);
+
+        y = 5*this.squareSize+8;
+        this.ctxBoard.strokeRect(x, y, 3 * this.squareSize, this.squareSize);
+        this.ctxBoard.fillStyle = "rgb(193, 255, 193)";
+        this.ctxBoard.fillRect(x, y, 3 * this.squareSize, this.squareSize);
+        textY = y + (this.squareSize/ 1.5); 
+        this.ctxBoard.fillStyle = "black";
+        this.ctxBoard.fillText("EASY", textX, textY);
+
+        y = 6*this.squareSize+8;
+        this.ctxBoard.strokeRect(x, y, 3 * this.squareSize, this.squareSize);
+        this.ctxBoard.fillStyle = "rgb(191, 245, 239)";
+        this.ctxBoard.fillRect(x, y, 3 * this.squareSize, this.squareSize);
+        textY = y + (this.squareSize/ 1.5); 
+        this.ctxBoard.fillStyle = "black";
+        this.ctxBoard.fillText("NORMAL", textX, textY);
+
+        y = 7*this.squareSize+8;
+        this.ctxBoard.strokeRect(x, y, 3 * this.squareSize, this.squareSize);
+        this.ctxBoard.fillStyle = "rgb(255, 192, 203)";
+        this.ctxBoard.fillRect(x, y, 3 * this.squareSize, this.squareSize);
+        textY = y + (this.squareSize/ 1.5); 
+        this.ctxBoard.fillStyle = "black";
+        this.ctxBoard.fillText("HARD", textX, textY);
+
+        y = 10*this.squareSize+8;
+        this.ctxBoard.strokeRect(x, y, 3 * this.squareSize, this.squareSize);
+        this.ctxBoard.fillStyle = "rgb(191, 245, 239)";
+        this.ctxBoard.fillRect(x, y, 3 * this.squareSize, this.squareSize);
+        textY = y + (this.squareSize/ 1.5); 
+        this.ctxBoard.fillStyle = "black";
+        this.ctxBoard.fillText("GERMAN", textX, textY);
+
+        y = 11*this.squareSize+8;
+        this.ctxBoard.strokeRect(x, y, 3 * this.squareSize, this.squareSize);
+        this.ctxBoard.fillStyle = "rgb(191, 245, 239)";
+        this.ctxBoard.fillRect(x, y, 3 * this.squareSize, this.squareSize);
+        textY = y + (this.squareSize/ 1.5); 
+        this.ctxBoard.fillStyle = "black";
+        this.ctxBoard.fillText("ENGLSH", textX, textY);
+
+        y = 16*this.squareSize+8;
+        this.ctxBoard.strokeRect(x, y, 3 * this.squareSize, this.squareSize);
+        this.ctxBoard.fillStyle = "rgb(219,112,147)";
+        this.ctxBoard.fillRect(x, y, 3 * this.squareSize, this.squareSize);
+        textY = y + (this.squareSize/ 1.5); 
+        this.ctxBoard.fillStyle = "black";
+        this.ctxBoard.fillText("PLAY", textX, textY);
     }
 }
