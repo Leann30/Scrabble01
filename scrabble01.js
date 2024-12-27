@@ -201,18 +201,28 @@ class Scrabble01{
             }
         }
 
-        setTile1(x, y, letter){
-            this.ctxBoard.beginPath();
-            this.ctxBoard.fillStyle = "rgb(255, 192, 203)";
+    setTile1(x, y, letter){
+        this.ctxBoard.beginPath();
+        this.ctxBoard.fillStyle = "rgb(255, 192, 203)";
+        
+        this.ctxBoard.strokeStyle = "black"; 
+        this.ctxBoard.lineWidth = 2; 
+        
+        const textX = x * this.squareSize + this.squareSize / 3; 
+        let textY = y * this.squareSize + (this.squareSize/ 1.5);
+
+        if(y < 3){
+            textY = y * this.squareSize + (this.squareSize/ 1.5);
+            this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize, this.squareSize, this.squareSize);
+            this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize, this.squareSize, this.squareSize);
+        } else {
+            textY = y * this.squareSize + (this.squareSize/ 1.5) + 8; 
             this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize + 8, this.squareSize, this.squareSize);
-            this.ctxBoard.strokeStyle = "black"; 
-            this.ctxBoard.lineWidth = 2; 
             this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize + 8, this.squareSize, this.squareSize);
-            const textX = x * this.squareSize + this.squareSize / 3; 
-            const textY = y * this.squareSize + (this.squareSize/ 1.5) + 8; 
-            this.ctxBoard.font = "bold 14px verdana, sans-serif";
-            this.ctxBoard.fillStyle = "black";
-            this.ctxBoard.fillText(letter, textX, textY);
+        }
+        this.ctxBoard.font = "bold 14px verdana, sans-serif";
+        this.ctxBoard.fillStyle = "black";
+        this.ctxBoard.fillText(letter, textX, textY);
     }
 
     setTile2(x, y, letter){
@@ -223,28 +233,31 @@ class Scrabble01{
         this.ctxBoard.lineWidth = 2; 
         this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize + 8, this.squareSize, this.squareSize);
         const textX = x * this.squareSize + this.squareSize / 3; 
-        const textY = y * this.squareSize + (this.squareSize/ 1.5) + 8; 
+        
+        let textY = y * this.squareSize + (this.squareSize/ 1.5) + 8; 
+
+        if(y < 3){
+            textY = y * this.squareSize + (this.squareSize/ 1.5);
+        }
+        
         this.ctxBoard.font = "bold 14px verdana, sans-serif";
         this.ctxBoard.fillStyle = "black";
         this.ctxBoard.fillText(letter, textX, textY);
     }
 
-    removeTile1(x, y){
+    removeTile(x, y){
         this.ctxBoard.beginPath();
         this.ctxBoard.fillStyle = "rgb(128, 128, 128)";
-        this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize, this.squareSize, this.squareSize);
         this.ctxBoard.strokeStyle = "black"; 
         this.ctxBoard.lineWidth = 2; 
-        this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize, this.squareSize, this.squareSize);
-    }
 
-    removeTile2(x, y){
-        this.ctxBoard.beginPath();
-        this.ctxBoard.fillStyle = "rgb(128, 128, 128)";
-        this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize + 16, this.squareSize, this.squareSize);
-        this.ctxBoard.strokeStyle = "black"; 
-        this.ctxBoard.lineWidth = 2; 
-        this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize + 16, this.squareSize, this.squareSize);
+        if(y < 3){
+            this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize, this.squareSize, this.squareSize);
+            this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize, this.squareSize, this.squareSize);
+        } else {
+            this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize + 16, this.squareSize, this.squareSize);
+            this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize + 16, this.squareSize, this.squareSize);
+        }
     }
 
     drawSideBar(){

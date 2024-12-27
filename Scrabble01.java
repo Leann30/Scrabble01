@@ -34,7 +34,7 @@ class Player01 {
         List<Character> eightPointL = new ArrayList<>(List.of('J', 'Q'));
         List<Character> tenPointL = new ArrayList<>(List.of('K', 'W', 'X', 'Y', 'Z'));
         
-        int bagSize = 7;
+        int bagSize = 50;
 
         for(int i = 0; i < bagSize; i++){
 
@@ -76,6 +76,14 @@ class Scrabble01 implements Clerk{
         char currentLetter = 'B';
         int currentPlayer = 1;
         char tile;
+        char tileBoard;
+
+        char[] currentTilesTop = new char[7];
+        char[] currentTilesBottom = new char[7];
+        char[] tilesTop = new char[7];
+        char[] tilesBottom = new char[7];
+
+        List<String> specialFields = new ArrayList<>(List.of("DL", "TL", "DW", "TW", "NaN"));
 
         List<Character> onePointL = new ArrayList<>(List.of('A', 'E', 'I', 'L', 'N', 'O', 'R', 'S', 'T', 'U'));
         List<Character> twoPointL = new ArrayList<>(List.of('D', 'G', 'M'));
@@ -102,15 +110,26 @@ class Scrabble01 implements Clerk{
             {"NaN", "DW", "NaN", "NaN", "NaN", "TL", "NaN", "NaN", "NaN", "TL", "NaN", "NaN", "NaN", "DW", "NaN"},
             {"TW", "NaN", "NaN", "DL", "NaN", "NaN", "NaN", "TW", "NaN", "NaN", "NaN", "DL", "NaN", "NaN", "TW"}
         };
+
+       String[][] currentBoard = new String[15][15];
     
         Scrabble01(LiveView view, int width, int height, Player01 player1, Player01 player2) {
 
+            for (int i = 0; i < this.currentBoard.length; i++) {
+                for (int j = 0; j < this.currentBoard[i].length; j++) {
+                    this.currentBoard[i][j] = "0";
+                }
+            }
+        
             this.view = view;
             this.width  = Math.max(1, Math.abs(width));  // width is at least of size 1
             this.height = Math.max(1, Math.abs(height)); // height is at least of size 1
             this.player1 = player1;
             this.player2 = player2;
+            this.tile = ' ';
+            this.tileBoard  = ' ';
 
+            
             Clerk.load(view, libPath);
             ID = Clerk.getHashID(this);
     
@@ -121,9 +140,16 @@ class Scrabble01 implements Clerk{
            Clerk.script(view, "scrabble" + ID + ".drawScoreBottom(" + player2.score + ");");
 
 
-            for (int i = 0; i < player2.bag.size(); i++) {
+            for (int i = 0; i < 7; i++) {
                 char letter1 = player1.bag.get(i);
+                this.currentTilesTop[i] = letter1;
+                this.tilesTop[i] = letter1;
+                player1.bag.remove(i);
+
                 char letter2 = player2.bag.get(i);
+                this.currentTilesBottom[i] = letter2;
+                this.tilesBottom[i] = letter2;
+                player2.bag.remove(i);
                 Clerk.script(view, "scrabble" + ID + ".textTilesBottom(" + i + ", '" + letter2 + "');");
                 Clerk.script(view, "scrabble" + ID + ".textTilesTop(" + i + ", '" + letter1 + "');");
             }
@@ -134,45 +160,78 @@ class Scrabble01 implements Clerk{
                 int x = Integer.parseInt(temp[0]);
                 int y = Integer.parseInt(temp[1]);
                 System.out.println("" + x +" + " + y);
+                
+                updateBoard(x, y);
                 getTile(x, y);
                 updateScore(x, y, this.tile);
-                updateBoard(x, y);
             });
         }
 
+void fillTopTiles(){
+
+}
+
+void fillBottomTiles(){
+    
+}
 void turn(){
     this.currentPlayer *= -1;
     this.tile = ' ';
+    this.tileBoard  = ' ';
 }
 
 char getTile(int x, int y){
 
     //Hole Stein für ersten Klick 
-    if(x >= 7 && x <= 13 &&  y == 2 && this.currentPlayer > 0){  //auf top tiles geklickt
-        this.tile = player1.bag.get(x-7);
-        Clerk.script(view, "scrabble" + ID + ".removeTile1("+ x + ", '" + y + "');");
-    } else if(x >= 1 && x <= 7 &&  y == 18 && this.currentPlayer < 0){ //auf bottom tiles 
-        this.tile = player2.bag.get(x-1);
-        Clerk.script(view, "scrabble" + ID + ".removeTile2("+ x + ", '" + y + "');");
-    } 
+    if(x >= 7 && x <= 13 &&  y == 2 && this.currentPlayer > 0 /*&& this.tileBoard == ' '*/){  //auf top tiles geklickt
+        this.tile = this.tilesTop[x-7]; //hole Stein auf den geklickt wurde
+        this.tileBoard = ' ';
+        this.currentTilesTop[x-7] = '0';
+        Clerk.script(view, "scrabble" + ID + ".removeTile("+ x + ", '" + y + "');");
+
+    } else if(x >= 1 && x <= 7 &&  y == 18 && this.currentPlayer < 0 /*&& this.tileBoard == ' '*/){ //auf bottom tiles 
+        this.tile = this.tilesBottom[x-1];
+        this.tileBoard = ' ';
+        this.currentTilesBottom[x-1] = '0';
+        Clerk.script(view, "scrabble" + ID + ".removeTile("+ x + ", '" + y + "');");
+        
+    } else if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.specialFields.contains(this.board[x][y-3]) && !(this.currentBoard[x][y-3].equals("0"))){
+        this.tileBoard = this.currentBoard[x][y-3].charAt(0);
+        this.tile = ' ';
+        this.currentBoard[x][y-3] = "0";
+    }
     return this.tile;
 }
 
 void updateBoard(int x, int y){
 
-    if((this.tile != ' ')){
-        if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer > 0 && (this.board[x][y-3] == "TW" || this.board[x][y-3] == "DW" || this.board[x][y-3] == "TL" || this.board[x][y-3] == "DL" || this.board[x][y-3] == "NaN")){
+        if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer > 0 && this.currentBoard[x][y-3].equals("0") && this.specialFields.contains(this.board[x][y-3]) && this.tile != ' ' && this.tileBoard == ' '){ //Spieler1 innerhalb Board
             Clerk.script(view, "scrabble" + ID + ".setTile1("+ x + ", '" + y + "', '" + this.tile + "');");
-            this.board[x][y-3] = "" + this.tile;
+            this.currentBoard[x][y-3] = "" + this.tile;
             this.tile = ' ';
+            this.tileBoard = ' ';
 
-        } else if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer < 0 && (this.board[x][y-3] == "TW" || this.board[x][y-3] == "DW" || this.board[x][y-3] == "TL" || this.board[x][y-3] == "DL" || this.board[x][y-3] == "NaN")){
+        } else if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer < 0 && this.currentBoard[x][y-3].equals("0") && this.specialFields.contains(this.board[x][y-3]) && this.tile != ' ' && this.tileBoard == ' '){
             Clerk.script(view, "scrabble" + ID + ".setTile2(" + x + ", '" + y + "', '" + this.tile + "');");
-            this.board[x][y-3] = "" + this.tile;
+            this.currentBoard[x][y-3] = "" + this.tile;
             this.tile = ' ';
+            this.tileBoard = ' ';
+
+        } else if(x >= 7 && x <= 13 &&  y == 2 && this.currentPlayer > 0 && this.currentTilesTop[x-7] == '0' && this.tile == ' ' && this.tileBoard != ' '){ //Spieler1 innerhalb topTiles
+            Clerk.script(view, "scrabble" + ID + ".setTile1("+ x + ", '" + y + "', '" + this.tileBoard + "');");
+            this.currentBoard[x][y-3] = this.board[x][y-3]; //wieder zurücksetzen 
+            this.tile = ' ';
+            this.tileBoard = ' ';
+        
+        } else if(x >= 1 && x <= 7 &&  y == 18 && this.currentPlayer < 0 && this.currentTilesBottom[x-1] == '0' && this.tile == ' ' && this.tileBoard != ' '){ //Spieler2 innerhalb bottomTiles
+            Clerk.script(view, "scrabble" + ID + ".setTile2("+ x + ", '" + y + "', '" + this.tileBoard + "');");
+            this.currentBoard[x][y-3] = this.board[x][y-3];
+            this.tile = ' ';
+            this.tileBoard = ' ';
         }
     }
-}
+
+
 
  
 int updateScore(int x, int y, char currentLetter){
@@ -329,5 +388,3 @@ String getRandWord(){
     Scrabble01(int width, int height) { this(Clerk.view(), width, height, new Player01(), new Player01()); }
     Scrabble01() { this(Clerk.view(), 600, 600, new Player01(), new Player01());}
 }
-
-
