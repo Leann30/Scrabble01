@@ -45,15 +45,8 @@ class Scrabble01{
         drawScrabbleField() {
             for (let row = 3; row < this.gridSize + 3; row++) {
                 for (let col = 0; col < this.gridSize; col++) {
-                    const x = col * this.squareSize;
-                    const y = (row * this.squareSize)+8;
-    
                     this.ctxBoard.beginPath();
                     this.setColor(row-3, col);
-                    this.ctxBoard.fillRect(x, y, this.squareSize, this.squareSize);
-                    this.ctxBoard.strokeStyle = "black"; 
-                    this.ctxBoard.lineWidth = 1; 
-                    this.ctxBoard.strokeRect(x, y, this.squareSize, this.squareSize);
                     this.setText(row-3, col);      
                 }
             }
@@ -157,7 +150,9 @@ class Scrabble01{
             const doubleWord = new Set(["1,1", "2,2", "3,3", "4,4", "7,7", "13,1", "12,2", "11,3", "10,4", "4,10", "3,11", "2,12", "1,13", "10,10", "11,11", "12,12", "13,13"]);
     
             const key = `${row},${col}`;
-    
+            const x = col * this.squareSize;
+            const y = ((row+3) * this.squareSize)+8;
+
             // Wähle die Farbe basierend auf dem Feldtyp
             if (tripleWord.has(key)) {
                 this.ctxBoard.fillStyle = "rgb(205, 38, 38)"; //rot: tw
@@ -170,6 +165,11 @@ class Scrabble01{
             } else {
                 this.ctxBoard.fillStyle = "rgb(193, 255, 193)"; //sonst grün
             }
+
+            this.ctxBoard.fillRect(x, y, this.squareSize, this.squareSize);
+            this.ctxBoard.strokeStyle = "black"; 
+            this.ctxBoard.lineWidth = 1; 
+            this.ctxBoard.strokeRect(x, y, this.squareSize, this.squareSize);
         }
             setText(row, col){
                 const tripleWord = new Set(["0,0", "14,0", "0,14", "14,14", "0,7", "7,0", "14,7", "7,14"]);

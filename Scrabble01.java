@@ -5,6 +5,7 @@ import java.net.http.HttpRequest;
 import java.util.Optional;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 /* 
@@ -62,6 +63,34 @@ class Player01 {
         int rand = random.nextInt(letterList.size()); 
         return letterList.get(rand);
     }
+}
+
+class Position{
+
+    int x;
+    int y;
+    boolean checkDown = true;
+    boolean checkLeft = true;
+    List<Position> positions = new ArrayList<>();
+
+    Position(int x, int y){
+        this.x = x;
+        this.y = y;
+    }
+
+    void addPosition(int x, int y){
+        this.positions.add(new Position(x, y));
+    }
+
+    void clearPositions(){
+        positions = new ArrayList<>();
+    }
+
+    @Override
+    public String toString() {
+        return "Position{x = " + x + ", y = " + y + "}";
+    }
+
 }
 
 class Scrabble01 implements Clerk{
@@ -183,22 +212,24 @@ void turn(){
 char getTile(int x, int y){
 
     //Hole Stein für ersten Klick 
-    if(x >= 7 && x <= 13 &&  y == 2 && this.currentPlayer > 0 /*&& this.tileBoard == ' '*/){  //auf top tiles geklickt
+    if(x >= 7 && x <= 13 &&  y == 2 && this.currentPlayer > 0 && this.tile == ' '){  //auf top tiles geklickt
         this.tile = this.tilesTop[x-7]; //hole Stein auf den geklickt wurde
         this.tileBoard = ' ';
         this.currentTilesTop[x-7] = '0';
         Clerk.script(view, "scrabble" + ID + ".removeTile("+ x + ", '" + y + "');");
 
-    } else if(x >= 1 && x <= 7 &&  y == 18 && this.currentPlayer < 0 /*&& this.tileBoard == ' '*/){ //auf bottom tiles 
+    } else if(x >= 1 && x <= 7 &&  y == 18 && this.currentPlayer < 0 && this.tile == ' '){ //auf bottom tiles 
         this.tile = this.tilesBottom[x-1];
         this.tileBoard = ' ';
         this.currentTilesBottom[x-1] = '0';
         Clerk.script(view, "scrabble" + ID + ".removeTile("+ x + ", '" + y + "');");
         
-    } else if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.specialFields.contains(this.board[x][y-3]) && !(this.currentBoard[x][y-3].equals("0"))){
+    } else if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.specialFields.contains(this.board[x][y-3]) && !(this.currentBoard[x][y-3].equals("0")) && this.tileBoard == ' ' && this.tile != ' '){ //auf board
         this.tileBoard = this.currentBoard[x][y-3].charAt(0);
         this.tile = ' ';
         this.currentBoard[x][y-3] = "0";
+        Clerk.script(view, "scrabble" + ID + ".setColor("+ x + ", '" + (y-3) + "');"); 
+        Clerk.script(view, "scrabble" + ID + ".setText("+ x + ", '" + (y-3) + "');");
     }
     return this.tile;
 }
@@ -219,21 +250,16 @@ void updateBoard(int x, int y){
 
         } else if(x >= 7 && x <= 13 &&  y == 2 && this.currentPlayer > 0 && this.currentTilesTop[x-7] == '0' && this.tile == ' ' && this.tileBoard != ' '){ //Spieler1 innerhalb topTiles
             Clerk.script(view, "scrabble" + ID + ".setTile1("+ x + ", '" + y + "', '" + this.tileBoard + "');");
-            this.currentBoard[x][y-3] = this.board[x][y-3]; //wieder zurücksetzen 
             this.tile = ' ';
             this.tileBoard = ' ';
         
         } else if(x >= 1 && x <= 7 &&  y == 18 && this.currentPlayer < 0 && this.currentTilesBottom[x-1] == '0' && this.tile == ' ' && this.tileBoard != ' '){ //Spieler2 innerhalb bottomTiles
             Clerk.script(view, "scrabble" + ID + ".setTile2("+ x + ", '" + y + "', '" + this.tileBoard + "');");
-            this.currentBoard[x][y-3] = this.board[x][y-3];
             this.tile = ' ';
             this.tileBoard = ' ';
         }
     }
 
-
-
- 
 int updateScore(int x, int y, char currentLetter){
 
     int counter = 0;
@@ -267,54 +293,108 @@ int updateScore(int x, int y, char currentLetter){
     }
     return counter;
 }
-/* 
-void getWords(int i, int j){
+
+
+    /*
+ scrabble.currentBoard[0][0] = "B"
+ scrabble.currentBoard[0][1] = "A"
+ scrabble.currentBoard[1][0] = "A"
+ scrabble.currentBoard[0][2] = "U"
+ scrabble.currentBoard[2][0] = "U"
+ scrabble.currentBoard[0][3] = "M"
+ scrabble.currentBoard[3][0] = "M"
+
+ scrabble.board[0][0] = "B"
+ scrabble.board[0][1] = "A"
+ scrabble.board[1][0] = "A"
+ scrabble.board[0][2] = "U"
+ scrabble.board[2][0] = "U"
+ scrabble.board[0][3] = "M"
+ scrabble.board[3][0] = "M"
+
+scrabble.board[3][1] = "A"
+scrabble.board[3][2] = "U"
+scrabble.board[3][3] = "E"
+scrabble.board[3][4] = "R"*/
+void getWords() {
+    Position pos = new Position(0, 0);
     List<String> currentWords = new ArrayList<>();
-    String currentWord = "";
 
-//MIT TURING ?
-
-    //nach oben laufen
-    while(this.board[i][j] != "TW" && this.board[i][j] != "DW" && this.board[i][j] != "TL" && this.board[i][j] != "DL" && this.board[i][j] != "NaN" && this.board[i][j] != "Br" && j < board.length){
-        j--;
-    }  
-    int highestX = i;
-    int highestY = j;
-    //nach unten laufen 
-    while(this.board[i][j] != "TW" && this.board[i][j] != "DW" && this.board[i][j] != "TL" && this.board[i][j] != "DL" && this.board[i][j] != "NaN" && this.board[i][j] != "Br" && j < board.length){
-        j++;
-        currentWord += this.board[i][j];
-    } 
-    currentWords.add(currentWord);
-     
-    i = highestX;
-    j = highestY;
-    for (int k = 0; k < currentWords.get(0).length(); k++) {
-        
+    // Collect positions of newly placed tiles
+    for (int i = 0; i < this.currentBoard.length; i++) {
+        for (int j = 0; j < this.currentBoard.length; j++) {
+            if (!this.currentBoard[i][j].equals("0")) {
+                pos.addPosition(i, j);
+            }
+        }
     }
-    //nach links laufen
-    while(this.board[i][j] != "TW" && this.board[i][j] != "DW" && this.board[i][j] != "TL" && this.board[i][j] != "DL" && this.board[i][j] != "NaN" && i < board.length){
-        i--;
+
+    // Traverse positions and form words
+    for (Position position : pos.positions) {
+        int x = position.x;
+        int y = position.y;
+
+        System.out.println("Position: " + position.toString() + ", checkD: " + position.checkDown + ", checkL: " + position.checkLeft);
+        if (position.checkLeft) {
+            String wordH = extractWordHorizontal(x, y, pos);
+            if (wordH.length() > 1){ 
+                currentWords.add(wordH);
+            }
+        }
+
+        // Check if vertical word should be extracted
+        if (position.checkDown) {
+            String wordV = extractWordVertical(x, y, pos);
+            if (wordV.length() > 1){ 
+                currentWords.add(wordV);
+            }
+        }
     }
-    //nach rechts laufen+ wort zusammensetzen
-    while(this.board[i][j] != "TW" && this.board[i][j] != "DW" && this.board[i][j] != "TL" && this.board[i][j] != "DL" && this.board[i][j] != "NaN" && i < board.length){
-    currentWord += this.board[i][j];
-    i++;
+    pos.clearPositions();
+    System.out.println("currentWords: " + currentWords);
+}
+
+private String extractWordHorizontal(int x, int y, Position pos) {
+    StringBuilder word = new StringBuilder();
+
+    // Move left to find the starting position
+    while (y > 0 && !this.specialFields.contains(this.board[x][y - 1])) y--;
+
+    // Build the word moving right
+    while (y < this.board.length && !this.specialFields.contains(this.board[x][y])) {
+        word.append(this.board[x][y]);
+        for (Position position : pos.positions) {
+            if(position.x == x && position.y == y){
+                position.checkLeft = false;
+            }
+        }
+        y++;
     }
-    currentWords.add(currentWord);
 
-        //setze erstes Wort immer in die Mitte (an gleiche Pos)
-        //gehe von dort aus ganz nach oben bis bed. erfüllt
-        //gehe von jedem Buchstabn des ersten Wortes nach links (bis nach rechts alle Buchstaben hinzufügen)
-        //rechts und links wieder von jedem Buchstaben ganz nach oben und dann unten, wieder rechts und links
-        //komplettes Board durchgehen und alles was nicht dranhängt auf default wert setzen
+    return word.toString();
+}
 
+private String extractWordVertical(int x, int y, Position pos) {
+    StringBuilder word = new StringBuilder();
 
-       //Strings müssen richtig aneinander liegen
-       //also vom als erstes gelegten Wort ausgehen, alles andere nicht validieren 
+    // Move up to find the starting position
+    while (x > 0 && !this.specialFields.contains(this.board[x - 1][y])) x--;
 
-}*/
+    // Build the word moving down
+    while (x < this.board.length && !this.specialFields.contains(this.board[x][y])) {
+        word.append(this.board[x][y]);
+        for (Position position : pos.positions) {
+            if(position.x == x && position.y == y){
+                position.checkDown = false;
+            }
+        }
+        x++;
+    }
 
+    return word.toString();
+}
+
+  
 boolean validateWord(String input) {
    
     try {
@@ -388,3 +468,4 @@ String getRandWord(){
     Scrabble01(int width, int height) { this(Clerk.view(), width, height, new Player01(), new Player01()); }
     Scrabble01() { this(Clerk.view(), 600, 600, new Player01(), new Player01());}
 }
+
