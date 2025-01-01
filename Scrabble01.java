@@ -9,12 +9,18 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 /* 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+SPIELABLAUF:
+
+-Spieler1 legt fertig 
+-drückt auf play
+-daraufhin Wörtervalidierung ...
+-wenn Wörter nicht validiert: Fehler anzeigen
+-score erhöhen 
+-Spieler2 kann legen 
+
+METHODEN SCHREIBEN:
+- nicht zusammenhängende Wörter in currentBoard finden 
+- current Board alle Worter holen und Listen vergleichen, wenn in allWord mehr ist wird Wort nicht validiert
 */
 
 class Player01 {
@@ -91,6 +97,27 @@ class Position{
         return "Position{x = " + x + ", y = " + y + "}";
     }
 
+}
+
+class Letter{
+
+    String letter;
+    Position position;
+    List<Letter> currentBoardLetters = new ArrayList<>();
+    List<Letter> boardLetters = new ArrayList<>();
+
+    Letter(Position position, String letter){
+        this.position = position;
+        this.letter = letter;
+    }
+
+    void addCurrentBoardLetter(Position p, String l){
+        this.currentBoardLetters.add(new Letter(p, l));
+    }
+
+    void addboardLetters(Position p, String l){
+        this.boardLetters.add(new Letter(p, l));
+    }
 }
 
 class Scrabble01 implements Clerk{
@@ -296,6 +323,11 @@ int updateScore(int x, int y, char currentLetter){
 
 
     /*
+/o lvp.java
+/o Views/Scrabble01/Scrabble01.java
+Scrabble01 scrabble = new Scrabble01()
+System.out.println(scrabble.toString());
+
  scrabble.currentBoard[0][0] = "B"
  scrabble.currentBoard[0][1] = "A"
  scrabble.currentBoard[1][0] = "A"
@@ -303,6 +335,70 @@ int updateScore(int x, int y, char currentLetter){
  scrabble.currentBoard[2][0] = "U"
  scrabble.currentBoard[0][3] = "M"
  scrabble.currentBoard[3][0] = "M"
+
+scrabble.currentBoard[0][0] = "A";
+        scrabble.currentBoard[0][1] = "B";
+        scrabble.currentBoard[0][2] = "B";
+        scrabble.currentBoard[0][3] = "I";
+        scrabble.currentBoard[0][4] = "L";
+        scrabble.currentBoard[0][5] = "D";
+        scrabble.currentBoard[0][6] = "U";
+        scrabble.currentBoard[0][7] = "N";
+        scrabble.currentBoard[0][8] = "G";
+        scrabble.currentBoard[0][9] = "S";
+        scrabble.currentBoard[0][10] = "E";
+        scrabble.currentBoard[0][11] = "B";
+        scrabble.currentBoard[0][12] = "E";
+        scrabble.currentBoard[0][13] = "N";
+        scrabble.currentBoard[0][14] = "E";
+
+scrabble.currentBoard[0][14] = "E";
+        scrabble.currentBoard[1][14] = "B";
+        scrabble.currentBoard[2][14] = "E";
+        scrabble.currentBoard[3][14] = "N";
+        scrabble.currentBoard[4][14] = "H";
+        scrabble.currentBoard[5][14] = "O";
+        scrabble.currentBoard[6][14] = "L";
+        scrabble.currentBoard[7][14] = "Z";
+        scrabble.currentBoard[8][14] = "G";
+        scrabble.currentBoard[9][14] = "E";
+        scrabble.currentBoard[10][14] = "W";
+        scrabble.currentBoard[11][14] = "Ä";
+        scrabble.currentBoard[12][14] = "C";
+        scrabble.currentBoard[13][14] = "H";
+        scrabble.currentBoard[14][14] = "S";
+
+        scrabble.board[0][0] = "A";
+        scrabble.board[0][1] = "B";
+        scrabble.board[0][2] = "B";
+        scrabble.board[0][3] = "I";
+        scrabble.board[0][4] = "L";
+        scrabble.board[0][5] = "D";
+        scrabble.board[0][6] = "U";
+        scrabble.board[0][7] = "N";
+        scrabble.board[0][8] = "G";
+        scrabble.board[0][9] = "S";
+        scrabble.board[0][10] = "E";
+        scrabble.board[0][11] = "B";
+        scrabble.board[0][12] = "E";
+        scrabble.board[0][13] = "N";
+        scrabble.board[0][14] = "E";
+
+        scrabble.board[0][14] = "E";
+        scrabble.board[1][14] = "B";
+        scrabble.board[2][14] = "E";
+        scrabble.board[3][14] = "N";
+        scrabble.board[4][14] = "H";
+        scrabble.board[5][14] = "O";
+        scrabble.board[6][14] = "L";
+        scrabble.board[7][14] = "Z";
+        scrabble.board[8][14] = "G";
+        scrabble.board[9][14] = "E";
+        scrabble.board[10][14] = "W";
+        scrabble.board[11][14] = "Ä";
+        scrabble.board[12][14] = "C";
+        scrabble.board[13][14] = "H";
+        scrabble.board[14][14] = "S";
 
  scrabble.board[0][0] = "B"
  scrabble.board[0][1] = "A"
@@ -315,12 +411,20 @@ int updateScore(int x, int y, char currentLetter){
 scrabble.board[3][1] = "A"
 scrabble.board[3][2] = "U"
 scrabble.board[3][3] = "E"
-scrabble.board[3][4] = "R"*/
-void getWords() {
+scrabble.board[3][4] = "R"
+
+scrabble.currentBoard[3][14] = "P"
+scrabble.currentBoard[4][14] = "F"
+scrabble.currentBoard[5][14] = "A"
+scrabble.currentBoard[6][14] = "U"
+
+scrabble.getWords()
+*/
+List getWords() {
     Position pos = new Position(0, 0);
     List<String> currentWords = new ArrayList<>();
 
-    // Collect positions of newly placed tiles
+    // neue Positionen speichern
     for (int i = 0; i < this.currentBoard.length; i++) {
         for (int j = 0; j < this.currentBoard.length; j++) {
             if (!this.currentBoard[i][j].equals("0")) {
@@ -328,8 +432,6 @@ void getWords() {
             }
         }
     }
-
-    // Traverse positions and form words
     for (Position position : pos.positions) {
         int x = position.x;
         int y = position.y;
@@ -341,8 +443,6 @@ void getWords() {
                 currentWords.add(wordH);
             }
         }
-
-        // Check if vertical word should be extracted
         if (position.checkDown) {
             String wordV = extractWordVertical(x, y, pos);
             if (wordV.length() > 1){ 
@@ -351,52 +451,121 @@ void getWords() {
         }
     }
     pos.clearPositions();
+
+    //currentBoard wieder auf 0 setzen
+    for (int i = 0; i < this.currentBoard.length; i++) {
+        for (int j = 0; j < this.currentBoard[i].length; j++) {
+            this.currentBoard[i][j] = "0";
+        }
+    }
     System.out.println("currentWords: " + currentWords);
+    return currentWords;
 }
 
-private String extractWordHorizontal(int x, int y, Position pos) {
+
+String extractWordHorizontal(int x, int y, Position pos) {
     StringBuilder word = new StringBuilder();
 
-    // Move left to find the starting position
+    //gehe von aktueller Pos ganz nach links
     while (y > 0 && !this.specialFields.contains(this.board[x][y - 1])) y--;
 
-    // Build the word moving right
+    //gehe nach rechts setze wort zusammen 
     while (y < this.board.length && !this.specialFields.contains(this.board[x][y])) {
         word.append(this.board[x][y]);
         for (Position position : pos.positions) {
             if(position.x == x && position.y == y){
-                position.checkLeft = false;
+                position.checkLeft = false; //wenn bereits an pos vorbeigelaufen, muss nicht mehr nach links überprüft werden (Reihe schon geprüft)
             }
         }
         y++;
     }
-
     return word.toString();
 }
 
-private String extractWordVertical(int x, int y, Position pos) {
+
+String extractWordVertical(int x, int y, Position pos) {
     StringBuilder word = new StringBuilder();
 
-    // Move up to find the starting position
+    //nach oben
     while (x > 0 && !this.specialFields.contains(this.board[x - 1][y])) x--;
 
-    // Build the word moving down
+    //nach unten und wort zusammensetzen
     while (x < this.board.length && !this.specialFields.contains(this.board[x][y])) {
         word.append(this.board[x][y]);
         for (Position position : pos.positions) {
             if(position.x == x && position.y == y){
-                position.checkDown = false;
+                position.checkDown = false; 
             }
         }
         x++;
     }
-
     return word.toString();
 }
 
-  
+List<String> getAllWords() {
+    List<String> words = new ArrayList<>();
+    StringBuilder w = new StringBuilder();
+
+    // Wörter aus Reihen extrahieren
+    for (int row = 0; row < this.currentBoard.length; row++) {
+        for (int col = 0; col < this.currentBoard[0].length; col++) {
+            String letter = this.currentBoard[row][col];
+
+            if (!letter.equals("0")) {
+                w.append(letter); 
+            } else if (w.length() > 1) {
+                words.add(w.toString()); 
+                w.setLength(0); 
+            }
+        }
+        // Falls nach der letzten Spalte noch ein Wort übrig ist
+        if (w.length() > 1) {
+            words.add(w.toString());
+        }
+        w.setLength(0); 
+    }
+
+    // Wörter aus Spalten extrahieren
+    for (int col = 0; col < this.currentBoard[0].length; col++) {
+        
+        for (int row = 0; row < this.currentBoard.length; row++) {
+            String letter = this.currentBoard[row][col];
+            if (!letter.equals("0")) {
+                w.append(letter); 
+            } else if (w.length() > 1) {
+                words.add(w.toString()); 
+                w.setLength(0); 
+            }
+        }
+        // Falls nach der letzten Zeile noch ein Wort übrig ist
+        if (w.length() > 1) {
+            words.add(w.toString());
+        }
+        w.setLength(0);
+    }
+    return words;
+}
+
+
+List compareWordLists(List<String> words, List<String> allWords){
+    for (int i = 0; i < allWords.size(); i++) {
+        for (int j = 0; j < words.size(); j++) {
+           if(allWords.get(i).equals(words.get(j))){
+              allWords.set(i, "0");
+              words.set(j, "0");
+           }
+           words = words.stream()
+                        .filter(word -> word.equals("0")) 
+                        .collect(Collectors.toList());
+        }
+    }
+    return words;
+}
+
+
 boolean validateWord(String input) {
    
+    assert input.length() > 1;
     try {
         URI uri = URI.create("https://www.dwds.de/api/wb/snippet/?q=" + input);
         URL url = uri.toURL();
@@ -467,5 +636,33 @@ String getRandWord(){
     Scrabble01(LiveView view) { this(view, 600, 600, new Player01(), new Player01()); }
     Scrabble01(int width, int height) { this(Clerk.view(), width, height, new Player01(), new Player01()); }
     Scrabble01() { this(Clerk.view(), 600, 600, new Player01(), new Player01());}
-}
 
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        StringBuilder bs = new StringBuilder();
+    
+        // currentBoard formatieren
+        sb.append("Current Board:\n");
+        for (int i = 0; i < this.currentBoard.length; i++) {
+            sb.append("  "); // Einrückung für jede Zeile
+            for (int j = 0; j < this.currentBoard[i].length; j++) {
+                sb.append(this.currentBoard[i][j]).append(" | ");  // Leerzeichen zwischen Zeichen
+            }
+            sb.append(" | "+ "\n"); // Neue Zeile nach jeder Reihe
+        }
+    
+        // board formatieren
+        bs.append("Board:\n");
+        for (int i = 0; i < this.board.length; i++) {
+            bs.append("  "); // Einrückung für jede Zeile
+            for (int j = 0; j < this.board[i].length; j++) {
+                bs.append(this.board[i][j]).append(" | ");  // Leerzeichen zwischen Zeichen
+            }
+            bs.append(" | "+ "\n"); // Neue Zeile nach jeder Reihe
+        }
+    
+        return sb.append("\n").append(bs).toString();
+    }
+} 
