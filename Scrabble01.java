@@ -422,6 +422,7 @@ scrabble.getWords()
 */
 List getWords() {
     Position pos = new Position(0, 0);
+    Letter letter;
     List<String> currentWords = new ArrayList<>();
 
     // neue Positionen speichern
@@ -546,20 +547,15 @@ List<String> getAllWords() {
     return words;
 }
 
-
-List compareWordLists(List<String> words, List<String> allWords){
-    for (int i = 0; i < allWords.size(); i++) {
-        for (int j = 0; j < words.size(); j++) {
-           if(allWords.get(i).equals(words.get(j))){
-              allWords.set(i, "0");
-              words.set(j, "0");
-           }
-           words = words.stream()
-                        .filter(word -> word.equals("0")) 
+//words: liste durch getWords
+//allWords: durch getAllWords
+List compareWordLists(List<String> words, List<String> allWords){ //wissen, welche Worte nicht ,,dranhängen", Fehler ausgeben 
+    List<String> wordsCopy = List.copyOf(words);
+    List<String> unmatchedWords = allWords.stream()
+                        .filter(word -> !wordsCopy.contains(word)) 
                         .collect(Collectors.toList());
-        }
-    }
-    return words;
+
+    return unmatchedWords;
 }
 
 
@@ -631,7 +627,7 @@ String getRandWord(){
         e.printStackTrace();
         return "Error fetching word";
     }
-} 
+}
 
     Scrabble01(LiveView view) { this(view, 600, 600, new Player01(), new Player01()); }
     Scrabble01(int width, int height) { this(Clerk.view(), width, height, new Player01(), new Player01()); }
