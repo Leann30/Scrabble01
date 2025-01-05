@@ -98,25 +98,20 @@ class Position{
     }
 
 }
+class Word{
 
-class Letter{
-
-    String letter;
-    Position position;
-    List<Letter> currentBoardLetters = new ArrayList<>();
-    List<Letter> boardLetters = new ArrayList<>();
-
-    Letter(Position position, String letter){
-        this.position = position;
-        this.letter = letter;
+    String word;
+    Position start;
+    Position end;
+    
+    Word(String word, Position start, Position end){
+        this.word = word;
+        this.start = start;
+        this.end = end;
     }
-
-    void addCurrentBoardLetter(Position p, String l){
-        this.currentBoardLetters.add(new Letter(p, l));
-    }
-
-    void addboardLetters(Position p, String l){
-        this.boardLetters.add(new Letter(p, l));
+    @Override
+    public String toString() {
+        return "Wort("+ word + " Position{start = " + start + ", end = " + end + "})";
     }
 }
 
@@ -420,11 +415,9 @@ scrabble.currentBoard[6][14] = "U"
 
 scrabble.getWords()
 */
-List getWords() {
+List<Word> getWords() {
+    List<Word> currentWords = new ArrayList<>();
     Position pos = new Position(0, 0);
-    Letter letter;
-    List<String> currentWords = new ArrayList<>();
-
     // neue Positionen speichern
     for (int i = 0; i < this.currentBoard.length; i++) {
         for (int j = 0; j < this.currentBoard.length; j++) {
@@ -439,14 +432,14 @@ List getWords() {
 
         System.out.println("Position: " + position.toString() + ", checkD: " + position.checkDown + ", checkL: " + position.checkLeft);
         if (position.checkLeft) {
-            String wordH = extractWordHorizontal(x, y, pos);
-            if (wordH.length() > 1){ 
+            Word wordH = extractWordHorizontal(x, y, pos);
+            if (wordH.word.length() > 1){ 
                 currentWords.add(wordH);
             }
         }
         if (position.checkDown) {
-            String wordV = extractWordVertical(x, y, pos);
-            if (wordV.length() > 1){ 
+            Word wordV = extractWordVertical(x, y, pos);
+            if (wordV.word.length() > 1){ 
                 currentWords.add(wordV);
             }
         }
@@ -459,20 +452,21 @@ List getWords() {
             this.currentBoard[i][j] = "0";
         }
     }
-    System.out.println("currentWords: " + currentWords);
+    //System.out.println("currentWords: " + currentWords);
     return currentWords;
 }
 
+Word extractWordHorizontal(int x, int y, Position pos) {
+    StringBuilder w = new StringBuilder();
+    
+    while (y > 0 && !this.specialFields.contains(this.board[x][y - 1])){
+         y--;
+    }
 
-String extractWordHorizontal(int x, int y, Position pos) {
-    StringBuilder word = new StringBuilder();
-
-    //gehe von aktueller Pos ganz nach links
-    while (y > 0 && !this.specialFields.contains(this.board[x][y - 1])) y--;
-
+    Position start = new Position(x, y);
     //gehe nach rechts setze wort zusammen 
     while (y < this.board.length && !this.specialFields.contains(this.board[x][y])) {
-        word.append(this.board[x][y]);
+        w.append(this.board[x][y]);
         for (Position position : pos.positions) {
             if(position.x == x && position.y == y){
                 position.checkLeft = false; //wenn bereits an pos vorbeigelaufen, muss nicht mehr nach links überprüft werden (Reihe schon geprüft)
@@ -480,19 +474,23 @@ String extractWordHorizontal(int x, int y, Position pos) {
         }
         y++;
     }
-    return word.toString();
+    Position end = new Position(x, y-1);
+    Word word2 = new Word(w.toString(), start, end);
+    return word2;
 }
 
-
-String extractWordVertical(int x, int y, Position pos) {
-    StringBuilder word = new StringBuilder();
+Word extractWordVertical(int x, int y, Position pos) {
+    StringBuilder w = new StringBuilder();
 
     //nach oben
-    while (x > 0 && !this.specialFields.contains(this.board[x - 1][y])) x--;
+    while (x > 0 && !this.specialFields.contains(this.board[x - 1][y])){ 
+        x--;
+    }
+    Position start = new Position(x, y);
 
     //nach unten und wort zusammensetzen
     while (x < this.board.length && !this.specialFields.contains(this.board[x][y])) {
-        word.append(this.board[x][y]);
+        w.append(this.board[x][y]);
         for (Position position : pos.positions) {
             if(position.x == x && position.y == y){
                 position.checkDown = false; 
@@ -500,63 +498,68 @@ String extractWordVertical(int x, int y, Position pos) {
         }
         x++;
     }
-    return word.toString();
+    Position end = new Position(x-1, y);
+    Word word2 = new Word(w.toString(), start, end);
+    return word2;
 }
 
-List<String> getAllWords() {
-    List<String> words = new ArrayList<>();
-    StringBuilder w = new StringBuilder();
 
+List<Word> getAllWords() {
+    List<Word> words = new ArrayList<>();
+    StringBuilder w = new StringBuilder();
+    Position start = null;
+    Position end = null;
     // Wörter aus Reihen extrahieren
     for (int row = 0; row < this.currentBoard.length; row++) {
         for (int col = 0; col < this.currentBoard[0].length; col++) {
             String letter = this.currentBoard[row][col];
 
             if (!letter.equals("0")) {
-                w.append(letter); 
+                if (w.length() == 0) {
+                    start = new Position(row, col);
+                }
+                if(col + 1 >= this.currentBoard[row].length || board[row][col+1].equals("0")){
+                    end = new Position(row, col);
+                }
+                w.append(letter);
             } else if (w.length() > 1) {
-                words.add(w.toString()); 
-                w.setLength(0); 
+                words.add(new Word(w.toString(), start, end));
+                w.setLength(0);
             }
         }
         // Falls nach der letzten Spalte noch ein Wort übrig ist
         if (w.length() > 1) {
-            words.add(w.toString());
+            words.add(new Word(w.toString(), start, end));
         }
-        w.setLength(0); 
+        w.setLength(0);
     }
 
     // Wörter aus Spalten extrahieren
     for (int col = 0; col < this.currentBoard[0].length; col++) {
-        
         for (int row = 0; row < this.currentBoard.length; row++) {
             String letter = this.currentBoard[row][col];
             if (!letter.equals("0")) {
-                w.append(letter); 
+                if (w.length() == 0) {
+                    start = new Position(row, col);
+                }
+                if(col + 1 >= this.currentBoard[col].length || board[row+1][col].equals("0")){
+                    end = new Position(row, col);
+                }
+                w.append(letter);
             } else if (w.length() > 1) {
-                words.add(w.toString()); 
-                w.setLength(0); 
+                words.add(new Word(w.toString(), start, end));
+                w.setLength(0);
             }
         }
         // Falls nach der letzten Zeile noch ein Wort übrig ist
         if (w.length() > 1) {
-            words.add(w.toString());
+            words.add(new Word(w.toString(), start, end));
         }
         w.setLength(0);
     }
     return words;
 }
 
-//words: liste durch getWords
-//allWords: durch getAllWords
-List compareWordLists(List<String> words, List<String> allWords){ //wissen, welche Worte nicht ,,dranhängen", Fehler ausgeben 
-    List<String> wordsCopy = List.copyOf(words);
-    List<String> unmatchedWords = allWords.stream()
-                        .filter(word -> !wordsCopy.contains(word)) 
-                        .collect(Collectors.toList());
-
-    return unmatchedWords;
-}
 
 
 boolean validateWord(String input) {
