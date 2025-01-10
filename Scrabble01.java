@@ -4,6 +4,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.util.Optional;
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -134,13 +135,17 @@ class Scrabble01 implements Clerk{
 
         List<String> specialFields = new ArrayList<>(List.of("DL", "TL", "DW", "TW", "NaN"));
 
-        List<String> onePointL = new ArrayList<>(List.of("A", "E", "I", "L", "N", "O", "R", "S", "T", "U"));
-        List<String> twoPointL = new ArrayList<>(List.of("D", "G", "M"));
-        List<String> threePointL = new ArrayList<>(List.of("B", "C", "P"));
-        List<String> fourPointL = new ArrayList<>(List.of("F", "H", "V"));
-        List<String> eightPointL = new ArrayList<>(List.of("J", "Q"));
-        List<String> tenPointL = new ArrayList<>(List.of("K", "W", "X", "Y", "Z"));
-
+        Map<String, Integer> letterScores = new HashMap<>(Map.ofEntries(
+            Map.entry("A", 1), Map.entry("E", 1), Map.entry("I", 1), Map.entry("L", 1),
+            Map.entry("N", 1), Map.entry("O", 1), Map.entry("R", 1), Map.entry("S", 1),
+            Map.entry("T", 1), Map.entry("U", 1),
+            Map.entry("D", 2), Map.entry("G", 2), Map.entry("M", 2),
+            Map.entry("B", 3), Map.entry("C", 3), Map.entry("P", 3),
+            Map.entry("F", 4), Map.entry("H", 4), Map.entry("V", 4),
+            Map.entry("J", 8), Map.entry("Q", 8),
+            Map.entry("K", 10), Map.entry("W", 10), Map.entry("X", 10),
+            Map.entry("Y", 10), Map.entry("Z", 10)
+        ));
 
         //TW = 1, int DW = 2, int TL = 3, DL = 4, NaN
         String[][] board = {
@@ -382,16 +387,13 @@ if(mulValue > 1){
 return mulValue * score;
 }
 
-/*Map<Character, Integer> letterScores = Map.of(
-    'A', 1, 'B', 3, 'C', 3,
-);*/
 
 int addiereScore(String currentLetter, int x, int y){
     int counter = 0;
     System.out.println("board: " + this.board[x][y]);
 
-    if(this.onePointL.contains(currentLetter)) { // double letter
-        
+    if(letterScores.get(currentLetter) == 1) { // double letter
+
         if(this.board[x][y].equals("DL")){ 
         counter += 2;
         }else if(this.board[x][y].equals("TL")){
@@ -400,52 +402,15 @@ int addiereScore(String currentLetter, int x, int y){
             counter += 1;
         }
 
-    }else if(this.twoPointL.contains(currentLetter)) {
+    }else {
         if(this.board[x][y].equals("DL")){
-        counter += 2 * 2;
+        counter += 2 * letterScores.get(currentLetter);
         } else if(this.board[x][y].equals("TL")){
-            counter += 2 * 3;
+            counter += 3 * letterScores.get(currentLetter);
         } else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
-            counter += 2;
+            counter += letterScores.get(currentLetter);
         }
     }
-    else if(this.threePointL.contains(currentLetter)) {
-        if(this.board[x][y].equals("DL")){
-        counter += 3 * 2;
-        } else if(this.board[x][y].equals("TL")){
-            counter += 3 * 3;
-        } else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
-            counter += 3;
-        }
-    }
-    else if(this.fourPointL.contains(currentLetter)) {
-        if(this.board[x][y].equals("DL")){
-        counter += 4 * 2;
-        } else if(this.board[x][y].equals("TL")){
-            counter += 4 * 3;
-        } else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
-            counter += 4;
-        }
-    }
-    else if(this.eightPointL.contains(currentLetter)) {
-        if(this.board[x][y].equals("DL")){
-        counter += 8 * 2;
-        } else if(this.board[x][y].equals("TL")){
-            counter += 8 * 3;
-        } else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
-            counter += 8;
-        }
-    }
-    else if(this.tenPointL.contains(currentLetter)) {
-        if(this.board[x][y].equals("DL")){
-        counter += 10 * 2;
-        } else if(this.board[x][y].equals("TL")){
-            counter += 10 * 3;
-        } else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
-            counter += 10;
-        }
-    }
-    /*HASHMAP*/
     return counter;
 }
 
