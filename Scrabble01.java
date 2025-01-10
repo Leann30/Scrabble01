@@ -129,19 +129,18 @@ class Scrabble01 implements Clerk{
         char tile;
         char tileBoard;
 
-        char[] currentTilesTop = new char[7];
-        char[] currentTilesBottom = new char[7];
         char[] tilesTop = new char[7];
         char[] tilesBottom = new char[7];
 
         List<String> specialFields = new ArrayList<>(List.of("DL", "TL", "DW", "TW", "NaN"));
 
-        List<Character> onePointL = new ArrayList<>(List.of('A', 'E', 'I', 'L', 'N', 'O', 'R', 'S', 'T', 'U'));
-        List<Character> twoPointL = new ArrayList<>(List.of('D', 'G', 'M'));
-        List<Character> threePointL = new ArrayList<>(List.of('B', 'C', 'P'));
-        List<Character> fourPointL = new ArrayList<>(List.of('F', 'H', 'V'));
-        List<Character> eightPointL = new ArrayList<>(List.of('J', 'Q'));
-        List<Character> tenPointL = new ArrayList<>(List.of('K', 'W', 'X', 'Y', 'Z'));
+        List<String> onePointL = new ArrayList<>(List.of("A", "E", "I", "L", "N", "O", "R", "S", "T", "U"));
+        List<String> twoPointL = new ArrayList<>(List.of("D", "G", "M"));
+        List<String> threePointL = new ArrayList<>(List.of("B", "C", "P"));
+        List<String> fourPointL = new ArrayList<>(List.of("F", "H", "V"));
+        List<String> eightPointL = new ArrayList<>(List.of("J", "Q"));
+        List<String> tenPointL = new ArrayList<>(List.of("K", "W", "X", "Y", "Z"));
+
 
         //TW = 1, int DW = 2, int TL = 3, DL = 4, NaN
         String[][] board = {
@@ -193,12 +192,10 @@ class Scrabble01 implements Clerk{
 
             for (int i = 0; i < 7; i++) {
                 char letter1 = player1.bag.get(i);
-                this.currentTilesTop[i] = letter1;
                 this.tilesTop[i] = letter1;
                 player1.bag.remove(i);
 
                 char letter2 = player2.bag.get(i);
-                this.currentTilesBottom[i] = letter2;
                 this.tilesBottom[i] = letter2;
                 player2.bag.remove(i);
                 Clerk.script(view, "scrabble" + ID + ".textTilesBottom(" + i + ", '" + letter2 + "');");
@@ -212,110 +209,256 @@ class Scrabble01 implements Clerk{
                 int y = Integer.parseInt(temp[1]);
                 System.out.println("" + x +" + " + y);
                 
-                updateBoard(x, y);
+                //aktueller Spieler legt Steine
                 getTile(x, y);
-                updateScore(x, y, this.tile);
+                updateBoard(x, y);
+
+                if (endTurn(x, y)){
+                /*Wörter holen, validierte und nicht-validierte 
+                 * wenn alle validiert sind, update Score
+                 * wenn nicht, Fehler ausgeben 
+                 */
+                
+                if(getWrongWords(getAllWords(), getWords()).isEmpty()){
+                   //updateScore(); mit Wörtern aus validierter Liste
+                   //wenn ein Buchstabe schon auf Spielfeld war, darf es nicht mitgezählt werden.
+                }
+            }
+                //wenn end turn gedrückt
+                //wörter validieren 
             });
         }
 
-void fillTopTiles(){
-
+boolean endTurn(int x, int y){
+ if(x >= 16 && x <= 18 && y == 16){
+    return true;
+ } else {
+    return false;
+ }
 }
 
-void fillBottomTiles(){
-    
-}
 void turn(){
     this.currentPlayer *= -1;
+    this.emptyTiles();
+}
+
+void emptyTiles(){
     this.tile = ' ';
     this.tileBoard  = ' ';
 }
 
-char getTile(int x, int y){
+void updateBoard(int x, int y) {
+    // Spieler 1 legt oder verschiebt Stein auf Board
+    if (x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer > 0) {
+        if (setzeTileBoard(x, y)) {
+            Clerk.script(view, "scrabble" + ID + ".setTile1(" + x + ", '" + y + "', '" + this.tile + "');");
+            this.currentBoard[x][y-3] = "" + this.tile;
+            this.tile = ' ';
+            this.tileBoard = ' ';
+            System.out.println("setze Stein Board: [tile: " + this.tile + "boardTile: " + this.tileBoard);
+        }
+    }
+    // Spieler 2 legt oder verschiebt Stein auf Board
+    else if (x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer < 0) {
+        if (setzeTileBoard(x, y)) {
+            Clerk.script(view, "scrabble" + ID + ".setTile2(" + x + ", '" + y + "', '" + this.tile + "');");
+            this.currentBoard[x][y-3] = "" + this.tile;
+            this.emptyTiles();
+            System.out.println("setze Stein Board: [tile: " + this.tile + "boardTile: " + this.tileBoard);
+        }
+    }
+    // Spieler 1 legt Stein zurück zu TopTiles
+    else if (x >= 7 && x <= 13 && y == 2 && this.currentPlayer > 0 && setzeTileTop(x, y)) {
+        this.tilesTop[x-7] = this.tileBoard;
+        Clerk.script(view, "scrabble" + ID + ".setTile1(" + x + ", '" + y + "', '" + this.tileBoard + "');");
+        this.emptyTiles();
+        System.out.println("setze Stein Top [tile: " + this.tile + "boardTile: " + this.tileBoard);
+    }
+    // Spieler 2 legt Stein zurück zu BottomTiles
+    else if (x >= 1 && x <= 7 && y == 18 && this.currentPlayer < 0 && setzeTileBottom(x, y)) {
+        this.tilesBottom[x-1] = this.tileBoard;
+        Clerk.script(view, "scrabble" + ID + ".setTile2(" + x + ", '" + y + "', '" + this.tileBoard + "');");
+        this.emptyTiles();
+        System.out.println("setze Stein Bottom: [tile: " + this.tile + "boardTile: " + this.tileBoard);
+    }
+}
 
-    //Hole Stein für ersten Klick 
-    if(x >= 7 && x <= 13 &&  y == 2 && this.currentPlayer > 0 && this.tile == ' '){  //auf top tiles geklickt
-        this.tile = this.tilesTop[x-7]; //hole Stein auf den geklickt wurde
+boolean setzeTileBoard(int x, int y) {
+    return this.tile != ' ' && this.tileBoard == ' ' 
+           && this.currentBoard[x][y-3].equals("0") 
+           && this.specialFields.contains(this.board[x][y-3]);
+}
+
+boolean setzeTileTop(int x, int y) {
+    return this.tile == ' ' && this.tileBoard != ' ' 
+           && this.tilesTop[x-7] == '0';
+}
+
+boolean setzeTileBottom(int x, int y) {
+    return this.tile == ' ' && this.tileBoard != ' ' 
+           && this.tilesBottom[x-1] == '0';
+}
+boolean holeTileTop(int x, int y){
+    if(this.tile == ' ' && this.tileBoard == ' ' && this.tilesTop[x-7] != '0'){ 
+        return true;
+    } else {
+        return false;
+    }
+}
+boolean holeTileBottom(int x, int y){
+    if(this.tile == ' ' && this.tileBoard == ' ' && this.tilesBottom[x-1] != '0'){
+        return true;
+    } else {
+        return false;
+    }
+}
+boolean holeTileBoard(int x, int y){
+    if(this.tile == ' ' && this.tileBoard == ' ' && this.specialFields.contains(this.board[x][y-3]) && !(this.currentBoard[x][y-3].equals("0"))){
+        System.out.println("this.currentBoard[x][y-3]: " + this.currentBoard[x][y-3]);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+char getTile(int x, int y) {
+    // Hole Stein für ersten Klick (von TopTiles)
+    if (x >= 7 && x <= 13 && y == 2 && this.currentPlayer > 0 && holeTileTop(x, y)) {  
+        this.tile = this.tilesTop[x-7];  // Hole Stein auf den geklickt wurde
         this.tileBoard = ' ';
-        this.currentTilesTop[x-7] = '0';
+        this.tilesTop[x-7] = '0'; // Entferne Stein von TopTiles   
         Clerk.script(view, "scrabble" + ID + ".removeTile("+ x + ", '" + y + "');");
-
-    } else if(x >= 1 && x <= 7 &&  y == 18 && this.currentPlayer < 0 && this.tile == ' '){ //auf bottom tiles 
+        System.out.println("hole Stein topTiles: [tile: " + this.tile + "boardTile: " + this.tileBoard);
+    } 
+    // Hole Stein für ersten Klick (von BottomTiles)
+    else if (x >= 1 && x <= 7 && y == 18 && this.currentPlayer < 0 && holeTileBottom(x, y)) { 
         this.tile = this.tilesBottom[x-1];
         this.tileBoard = ' ';
-        this.currentTilesBottom[x-1] = '0';
+        this.tilesBottom[x-1] = '0'; // Entferne Stein von BottomTiles
         Clerk.script(view, "scrabble" + ID + ".removeTile("+ x + ", '" + y + "');");
-        
-    } else if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.specialFields.contains(this.board[x][y-3]) && !(this.currentBoard[x][y-3].equals("0")) && this.tileBoard == ' ' && this.tile != ' '){ //auf board
-        this.tileBoard = this.currentBoard[x][y-3].charAt(0);
+        System.out.println("hole Stein bottomTiles: [tile: " + this.tile + "boardTile: " + this.tileBoard);
+    } 
+    // Hole Stein vom Board
+    else if (x >= 0 && x <= 14 && y >= 3 && y <= 17 && holeTileBoard(x, y)) {
+        this.tileBoard = this.currentBoard[x][y-3].charAt(0); // Hole Stein vom Board
         this.tile = ' ';
-        this.currentBoard[x][y-3] = "0";
-        Clerk.script(view, "scrabble" + ID + ".setColor("+ x + ", '" + (y-3) + "');"); 
-        Clerk.script(view, "scrabble" + ID + ".setText("+ x + ", '" + (y-3) + "');");
+        this.currentBoard[x][y-3] = "0"; // Entferne Stein vom Board
+        System.out.println("x: " + x + "," + "y: " + y);
+        Clerk.script(view, "scrabble" + ID + ".setColor("+ (y-3) + ", '" + x + "');"); 
+        Clerk.script(view, "scrabble" + ID + ".setText("+ (y-3) + ", '" + x + "');");
+        System.out.println("hole Stein Board: [tile: " + this.tile + "boardTile: " + this.tileBoard);
     }
     return this.tile;
 }
 
-void updateBoard(int x, int y){
+int updateScore(Word word){
 
-        if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer > 0 && this.currentBoard[x][y-3].equals("0") && this.specialFields.contains(this.board[x][y-3]) && this.tile != ' ' && this.tileBoard == ' '){ //Spieler1 innerhalb Board
-            Clerk.script(view, "scrabble" + ID + ".setTile1("+ x + ", '" + y + "', '" + this.tile + "');");
-            this.currentBoard[x][y-3] = "" + this.tile;
-            this.tile = ' ';
-            this.tileBoard = ' ';
+    int startX = word.start.x;
+    int startY = word.start.y;
+    int endX = word.end.x;
+    int endY = word.end.y;
 
-        } else if(x >= 0 && x <= 14 && y >= 3 && y <= 17 && this.currentPlayer < 0 && this.currentBoard[x][y-3].equals("0") && this.specialFields.contains(this.board[x][y-3]) && this.tile != ' ' && this.tileBoard == ' '){
-            Clerk.script(view, "scrabble" + ID + ".setTile2(" + x + ", '" + y + "', '" + this.tile + "');");
-            this.currentBoard[x][y-3] = "" + this.tile;
-            this.tile = ' ';
-            this.tileBoard = ' ';
+    int mulValue = 1;
+    int score = 0;
 
-        } else if(x >= 7 && x <= 13 &&  y == 2 && this.currentPlayer > 0 && this.currentTilesTop[x-7] == '0' && this.tile == ' ' && this.tileBoard != ' '){ //Spieler1 innerhalb topTiles
-            Clerk.script(view, "scrabble" + ID + ".setTile1("+ x + ", '" + y + "', '" + this.tileBoard + "');");
-            this.tile = ' ';
-            this.tileBoard = ' ';
+ if(startX == endX){
+    for (int i = startY; i <= endY; i++) {
+        score += addiereScore(this.currentBoard[startX][i], startX, i);
+        mulValue += mulScore(startX, i);
+        System.out.println("score: " + score);
+        System.out.println("multValue: " + mulValue);
+    }
+} else if(startY == endY){
+    for (int i = startX; i <= endX; i++) {
+        score += addiereScore(this.currentBoard[i][startY], i, startY);
+        mulValue += mulScore(i, startY);
+        System.out.println("score: " + score);
+        System.out.println("multValue: " + mulValue);
+    }
+}
+if(mulValue > 1){
+    mulValue--;
+}
+return mulValue * score;
+}
+
+/*Map<Character, Integer> letterScores = Map.of(
+    'A', 1, 'B', 3, 'C', 3,
+);*/
+
+int addiereScore(String currentLetter, int x, int y){
+    int counter = 0;
+    System.out.println("board: " + this.board[x][y]);
+
+    if(this.onePointL.contains(currentLetter)) { // double letter
         
-        } else if(x >= 1 && x <= 7 &&  y == 18 && this.currentPlayer < 0 && this.currentTilesBottom[x-1] == '0' && this.tile == ' ' && this.tileBoard != ' '){ //Spieler2 innerhalb bottomTiles
-            Clerk.script(view, "scrabble" + ID + ".setTile2("+ x + ", '" + y + "', '" + this.tileBoard + "');");
-            this.tile = ' ';
-            this.tileBoard = ' ';
+        if(this.board[x][y].equals("DL")){ 
+        counter += 2;
+        }else if(this.board[x][y].equals("TL")){
+            counter += 3;
+        }else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
+            counter += 1;
+        }
+
+    }else if(this.twoPointL.contains(currentLetter)) {
+        if(this.board[x][y].equals("DL")){
+        counter += 2 * 2;
+        } else if(this.board[x][y].equals("TL")){
+            counter += 2 * 3;
+        } else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
+            counter += 2;
         }
     }
-
-int updateScore(int x, int y, char currentLetter){
-
-    int counter = 0;
-
-    if(board[x][y] == "DL" && onePointL.contains(currentLetter)){//doubleletter
-        counter += 2+1;
-    } else if(board[x][y] == "DL" && twoPointL.contains(currentLetter)){
-        counter = 2*2;
-    } else if(board[x][y] == "DL" && threePointL.contains(currentLetter)){
-        counter = 2*3;
-    } else if(board[x][y] == "DL" && fourPointL.contains(currentLetter)){
-        counter = 2*4;
-    }else if(board[x][y] == "DL" && eightPointL.contains(currentLetter)){
-        counter = 2*8;
-    }else if(board[x][y] == "DL" && tenPointL.contains(currentLetter)){
-        counter = 2*10;
+    else if(this.threePointL.contains(currentLetter)) {
+        if(this.board[x][y].equals("DL")){
+        counter += 3 * 2;
+        } else if(this.board[x][y].equals("TL")){
+            counter += 3 * 3;
+        } else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
+            counter += 3;
+        }
     }
-
-    else if(board[x][y] == "TL" && onePointL.contains(currentLetter)){ //triple letter+onepointletter
-        counter = 1+3;
-    } else if(board[x][y] == "TL" && twoPointL.contains(currentLetter)){
-        counter = 2*3;
-    } else if(board[x][y] == "TL" && threePointL.contains(currentLetter)){
-        counter = 3*3;
-    } else if(board[x][y] == "TL" && fourPointL.contains(currentLetter)){
-        counter = 3*4;
-    }else if(board[x][y] == "TL" && eightPointL.contains(currentLetter)){
-        counter = 3*8;
-    }else if(board[x][y] == "TL" && tenPointL.contains(currentLetter)){
-        counter = 3*10;
+    else if(this.fourPointL.contains(currentLetter)) {
+        if(this.board[x][y].equals("DL")){
+        counter += 4 * 2;
+        } else if(this.board[x][y].equals("TL")){
+            counter += 4 * 3;
+        } else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
+            counter += 4;
+        }
     }
+    else if(this.eightPointL.contains(currentLetter)) {
+        if(this.board[x][y].equals("DL")){
+        counter += 8 * 2;
+        } else if(this.board[x][y].equals("TL")){
+            counter += 8 * 3;
+        } else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
+            counter += 8;
+        }
+    }
+    else if(this.tenPointL.contains(currentLetter)) {
+        if(this.board[x][y].equals("DL")){
+        counter += 10 * 2;
+        } else if(this.board[x][y].equals("TL")){
+            counter += 10 * 3;
+        } else if(this.board[x][y].equals("NaN") || this.board[x][y].equals("DW") || this.board[x][y].equals("TW")){
+            counter += 10;
+        }
+    }
+    /*HASHMAP*/
     return counter;
 }
 
+int mulScore(int x, int y){
+
+    if (this.board[x][y].equals("DW")){
+        return 2;
+    } else if(this.board[x][y].equals("TW")){
+        return 3;
+    } else {
+        return 0;
+    }
+}
 
     /*
 /o lvp.java
@@ -560,8 +703,39 @@ List<Word> getAllWords() {
     return words;
 }
 
+List<Word> getWrongWords(List<Word> allWords, List<Word> words){
+    List<Word> allWords2 = new ArrayList<>(allWords);
+    List<Word> words2 = new ArrayList<>(words);
 
+    for (int i = 0; i < allWords2.size(); i++) {
+        for (int j = 0; j < words2.size(); j++) {
+            System.out.println("i: " + i + "j" + j);
+            if(allWords2.get(i).word.equals(words2.get(j).word)){
+                allWords2.remove(i);
+            }
+        }
+    }
+    for (Word word : words2) {
+        if(!validateWord(word.word)){
+            allWords2.add(word);
+        }
+    }
+    return allWords2;
+}
+/*
+List<Word> words = List.of(
+        new Word("apple", new Position(1, 2), new Position(3, 4)),
+        new Word("banana", new Position(5, 6), new Position(7, 8)),
+        new Word("cherry", new Position(9, 10), new Position(11, 12))
+    );
 
+    List<Word> allWords = List.of(
+        new Word("apple", new Position(1, 2), new Position(3, 4)),
+        new Word("banana", new Position(5, 6), new Position(7, 8)),
+        new Word("cherry", new Position(0, 0), new Position(0, 5)),
+        new Word("cherry", new Position(9, 10), new Position(11, 12))
+    );
+ */
 boolean validateWord(String input) {
    
     assert input.length() > 1;
