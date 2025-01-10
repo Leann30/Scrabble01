@@ -20,11 +20,12 @@ class Scrabble01{
         this.boardHeight = this.fieldHeight / 15;
 
         this.squareSize = Math.min(this.fieldWidth, this.fieldHeight) / this.gridSize; // Größe der einzelnen Felder
-    
+
         this.drawScrabbleField();
         this.drawTilesTop();
         this.drawTilesBottom();
         this.drawSideBar();
+        //this.error(0, 0, 0, 3);
         
         this.boardCanvas.addEventListener("click", (event) => {
             
@@ -43,11 +44,12 @@ class Scrabble01{
     }
 
         drawScrabbleField() {
-            for (let row = 3; row < this.gridSize + 3; row++) {
+            for (let row = 0; row < this.gridSize; row++) {
                 for (let col = 0; col < this.gridSize; col++) {
                     this.ctxBoard.beginPath();
-                    this.setColor(row-3, col);
-                    this.setText(row-3, col);      
+                    console.log("drawrow: " + row + ", " + "col: " + col);
+                    this.setColor(row, col);
+                    this.setText(row, col);      
                 }
             }
         }
@@ -148,11 +150,12 @@ class Scrabble01{
             const doubleLetter = new Set(["3,0", "0,3", "0,11", "2,6", "6,2", "7,3", "8,2", "2,8", "3,7", "6,6", "8,6", "6,8", "8,8", "11,0", "11,7", "12,6", "6,12", "7,11", "8,12", "12,8", "3,14", "14,3", "14,11", "11,14"]);
             const tripleLetter = new Set(["1,5", "5,1", "1,9", "9,1", "8,8", "5,5", "5,9", "9,5", "9,9", "13,5", "13,9", "9,13", "5,13"]);
             const doubleWord = new Set(["1,1", "2,2", "3,3", "4,4", "7,7", "13,1", "12,2", "11,3", "10,4", "4,10", "3,11", "2,12", "1,13", "10,10", "11,11", "12,12", "13,13"]);
-    
+            
+            console.log("row: " + row + "," + "col: " + col);
             const key = `${row},${col}`;
             const x = col * this.squareSize;
             const y = ((row+3) * this.squareSize)+8;
-
+            console.log("x: " + x + "," + "y: " + y);
             // Wähle die Farbe basierend auf dem Feldtyp
             if (tripleWord.has(key)) {
                 this.ctxBoard.fillStyle = "rgb(205, 38, 38)"; //rot: tw
@@ -165,7 +168,7 @@ class Scrabble01{
             } else {
                 this.ctxBoard.fillStyle = "rgb(193, 255, 193)"; //sonst grün
             }
-
+            //fürs zeichnen muss y+3
             this.ctxBoard.fillRect(x, y, this.squareSize, this.squareSize);
             this.ctxBoard.strokeStyle = "black"; 
             this.ctxBoard.lineWidth = 1; 
@@ -321,5 +324,20 @@ class Scrabble01{
         textY = y + (this.squareSize/ 1.5); 
         this.ctxBoard.fillStyle = "black";
         this.ctxBoard.fillText("PLAY", textX, textY);
+    }
+
+    error(startX, startY, endX, endY){
+        this.ctxBoard.beginPath();
+        this.ctxBoard.strokeStyle = "red";
+        this.ctxBoard.fillStyle = "rgba(255, 0, 0, 0.3)"; 
+        this.ctxBoard.lineWidth = 4; 
+        if(startX == endX){ //Wort in Spalte
+            this.ctxBoard.strokeRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize, this.squareSize * endY-startY);
+            this.ctxBoard.fillRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize, this.squareSize * endY-startY);
+        } else if(startY == endY){
+            this.ctxBoard.strokeRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize * endX-startX, this.squareSize);
+            this.ctxBoard.fillRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize * endX-startX, this.squareSize);
+        }
+        this.ctxBoard.lineWidth = 2; 
     }
 }
