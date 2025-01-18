@@ -332,11 +332,11 @@ class Scrabble01{
         this.ctxBoard.fillStyle = "rgba(255, 0, 0, 0.3)"; 
         this.ctxBoard.lineWidth = 4; 
         if(startX == endX){ //Wort in Spalte
-            this.ctxBoard.strokeRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize, this.squareSize * endY-startY);
-            this.ctxBoard.fillRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize, this.squareSize * endY-startY);
+            this.ctxBoard.strokeRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize, this.squareSize * (endY-startY+1)); //weil Spielfeld bei 0 beginn
+            this.ctxBoard.fillRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize, this.squareSize * (endY-startY+1));
         } else if(startY == endY){
-            this.ctxBoard.strokeRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize * endX-startX, this.squareSize);
-            this.ctxBoard.fillRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize * endX-startX, this.squareSize);
+            this.ctxBoard.strokeRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize * (endX-startX+1), this.squareSize);
+            this.ctxBoard.fillRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize * (endX-startX+1), this.squareSize);
         }
         this.ctxBoard.lineWidth = 2; 
     }
