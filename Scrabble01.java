@@ -121,10 +121,21 @@ class Position{
     void clearPositions(){
         positions = new ArrayList<>();
     }
-
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Position position = (Position) obj;
+        return x == position.x && y == position.y;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
+    }
     @Override
     public String toString() {
-        return "Position{x = " + x + ", y = " + y + "positions: " + positions.toString() + "}";
+        return "Position{x = " + x + ", y = " + y + "}";
     }
 
 }
@@ -147,7 +158,10 @@ class Word{
     }
 
     void clearPositions(){
-        positions = new ArrayList<>();
+        this.positions = new ArrayList<>();
+    }
+    int getSizePosition(){
+        return this.positions.size();
     }
 
     @Override
@@ -176,7 +190,7 @@ class Scrabble01 implements Clerk{
         char[] tilesTop = new char[7];
         char[] tilesBottom = new char[7];
         boolean isFirstWord = true;
-        Word firstWord; 
+        Word firstWord = new Word("", null, null); 
         //Position fPos = new Position(0,0);
 
         List<String> specialFields = new ArrayList<>(List.of("DL", "TL", "DW", "TW", "NaN"));
@@ -368,30 +382,47 @@ void updateWrongWords(int x, int y){
              }
              this.firstWord.word = fWord;
             }*/
-void getFirstWord(int x, int y){
-    if(this.isFirstWord && x >= 0 && x <= 14 && y >= 3 && y <= 17){
-        /*
-         * hole Positionen für firstWord
-         * setze von dort aus erstes Wort zusammen 
-         */
-        //baue String zusammen und speichere start und end-Position (Buchstaben hinzufügen)
-       if(this.firstWord.positions.size()-1 <= 0 && !(this.firstWord.positions.isEmpty())){
-            int lastPos = this.firstWord.positions.size()-1;
-            System.out.println("firstWordPos: " + this.firstWord.positions);
-            System.out.println("x: " + x + " , vorheriges x: " + this.firstWord.positions.get(lastPos).x + " , erstes x: " + this.firstWord.positions.get(0).x);
-            System.out.println("y: " + y + " , vorheriges y: " + this.firstWord.positions.get(lastPos).y + " , erstes y: " + this.firstWord.positions.get(0).y);
-        }
-       
-        
-    
-        //Positionen und Buchstaben entfernen
-       /*  if(((x) == (this.fPos.positions.get(lastPos).x) && (x) == (this.fPos.positions.get(0).x)) || ((y) == (this.fPos.positions.get(lastPos).y) && (y) == (this.fPos.positions.get(0).y)) || (this.fPos.isEmpty())){ //Wenn startPosition und vorletzte Position von x oder y gleich, dann ist es immernoch das erste Wort
-            this.fPos.positions.removeIf(e -> e.x == x && e.y == y); //falls noch mal auf die gleiche Position geklickt wird, entferne diese wieder, wenn auf Position geklickt wurde, die bereits in fPos gespeichert ist
-            
-            //entferne Buchstaben an der Position, entferne entweder vorderen oder hinteren Teilstring 
-            //firstClick in fPos an erster Stelle 
-            //dann passiert nichts, vom ersten Wort aus die getWords verwenden. Wenn Buchstabe wieder vom Board genommen wird
-        } else {
+            void getFirstWord(int x, int y){
+                if(this.isFirstWord && x >= 0 && x <= 14 && y >= 3 && y <= 17){
+                    
+                    int lastPos = 0;
+                     y -= 3;
+                     System.out.println("y: " + y);
+                     //System.out.println("positionen des erstenWorts: " + this.firstWord.getSizePosition());
+                     /* hole Positionen für firstWord
+                      * setze von dort aus erstes Wort zusammen 
+                    */
+                     //baue String zusammen und speichere start und end-Position (Buchstaben hinzufügen)
+                    if(this.firstWord.positions.size() > 1){
+                         lastPos = this.firstWord.positions.size()-2;
+                         System.out.println("x: " + x + " , vorheriges x: " + this.firstWord.positions.get(lastPos).x);
+                         System.out.println("y: " + y + " , vorheriges y: " + this.firstWord.positions.get(lastPos).y);
+                    
+                      
+                     //Positionen und Buchstaben entfernen
+                    }
+                    if(this.firstWord.positions.size() > 0) {
+                     if(((x) == (this.firstWord.positions.get(lastPos).x) && (x) == (this.firstWord.positions.get(0).x)) || ((y) == (this.firstWord.positions.get(lastPos).y) && (y) == (this.firstWord.positions.get(0).y))){ //Wenn startPosition und vorletzte Position von x oder y gleich, dann ist es immernoch das erste Wort
+                         System.out.println("reingeschafft");
+                         
+                         if(this.firstWord.positions.contains(new Position(x, y))){
+                            this.firstWord.positions.remove(new Position(x, y));
+                        } else if(!(this.firstWord.positions.contains(new Position(x, y)))){
+                            this.firstWord.addPosition(x, y);
+                        }
+                            //falls noch mal auf die gleiche Position geklickt wird, entferne diese wieder, wenn auf Position geklickt wurde, die bereits in fPos gespeichert ist
+                         //entferne Buchstaben an der Position, entferne entweder vorderen oder hinteren Teilstring 
+                         //firstClick in fPos an erster Stelle 
+                         //dann passiert nichts, vom ersten Wort aus die getWords verwenden. Wenn Buchstabe wieder vom Board genommen wird
+                        }
+                    } else {
+                        this.firstWord.addPosition(x, y);
+                    }
+                  }
+                } 
+                 
+                
+                 /*else {
         this.isFirstWord = false;
         StringBuilder fWord = new StringBuilder(); //von erstem Click nach links oder unten gehen 
         if(this.fPos.get(0).x == this.fPos.get(fPos.size()).x){
@@ -419,8 +450,6 @@ void getFirstWord(int x, int y){
                 this.firstWord.end = new Position(x, y - 1);
             }
         }*/
-    }
-}
 
 void chooseLevel(int x, int y){
 
