@@ -301,10 +301,11 @@ class Scrabble01 implements Clerk{
                 getFirstWord(x, y); 
                 //updateWrongWords(x, y); //wenn wrongWords nicht leer, und wieder auf Position geklickt wird, entferne dieses 
                 
-                
+                //ich hole Wörter von updated Board, wenn Fehlerausgabe, Buchstaben auf die nach Fehlerausgabe geklickt wurden, müssen auscurrentBoard und updatedBoard gelöscgt werden
+                //Dann muss updatedBoard wieder mit currentBoard überschrieben werden.
                  if(endTurn(x, y)){
-                    overrideUpdatedBoard();
-                    this.wrongWords = getWrongWords(getAllWords(), getWords(this.updatedBoard)); //wrong words wieder aus updatedBoard löschen 
+                    overrideUpdatedBoard(); //currentBoard wird hinzugefügt
+                    this.wrongWords = getWrongWords(getAllWords(), getWords(this.updatedBoard)); 
                     System.out.println("wrongWords" + this.wrongWords);
 
                     if(this.wrongWords.isEmpty()){ //dann kann weitergespielt werden
@@ -326,6 +327,8 @@ class Scrabble01 implements Clerk{
                             System.out.println("wrong word" + w);
                             throwError(w);
                         }
+                        this.wrongWords = null;
+                        deleteCurrentFromUpdated();
                         //clearCurrentBoard();//so können tiles nicht mehr vom board genommen werden
                /* 
                 sonst Fehlerausgabe an Positionen von getWrongWords 
@@ -339,7 +342,16 @@ class Scrabble01 implements Clerk{
 void changeTiles(int x, int y){
 
 }
-
+void deleteCurrentFromUpdated(){
+    for (int row = 0; row < this.updatedBoard.length; row++) {
+        for (int col = 0; col < this.updatedBoard[row].length; col++) {
+            if(this.updatedBoard[row][col].equals(this.currentBoard[row][col])){
+                this.updatedBoard[row][col] = "0";
+            }
+        }
+    }
+    
+}
 void updateWrongWords(int x, int y){
     for(Word word: this.wrongWords){
         int startX = word.start.x;
@@ -795,28 +807,32 @@ List<Word> getWords(String[][] actualBoard) {
 
 Word extractWordHorizontal(int x, int y, Position pos, String[][] board1) {
     StringBuilder w = new StringBuilder();
+    List<Position> positions = new ArrayList<>();
 
     while (y > 0 && !(board1[x][y - 1].equals("0"))){
         y--;
     }
 
     Position start = new Position(x, y);
+  
     //gehe nach rechts setze wort zusammen
     while (y < board1.length && !(board1[x][y].equals("0"))) {
         w.append(board1[x][y]);
+        positions.add(new Position(x, y));
             if(pos.x == x && pos.y == y){
                 pos.checkLeft = false; //wenn bereits an pos vorbeigelaufen, muss nicht mehr nach links überprüft werden (Reihe schon geprüft)
-                System.out.println(pos.checkLeft);
             }
         y++;
     }
     Position end = new Position(x, y-1);
     Word word2 = new Word(w.toString(), start, end);
+    word2.positions = positions;
     return word2;
 }
 
 Word extractWordVertical(int x, int y, Position pos, String[][] board1) {
     StringBuilder w = new StringBuilder();
+    List<Position> positions = new ArrayList<>();
 
     //nach oben
     while (x > 0 && !(board1[x - 1][y].equals("0"))){
@@ -827,6 +843,7 @@ Word extractWordVertical(int x, int y, Position pos, String[][] board1) {
     //nach unten und wort zusammensetzen
     while (x < board1.length && !(board1[x][y].equals("0"))) {
         w.append(board1[x][y]);
+        positions.add(new Position(x, y));
             if(pos.x == x && pos.y == y){
                 pos.checkDown = false;
                 System.out.println(pos.checkDown);
@@ -835,11 +852,15 @@ Word extractWordVertical(int x, int y, Position pos, String[][] board1) {
     }
     Position end = new Position(x-1, y);
     Word word2 = new Word(w.toString(), start, end);
+    word2.positions = positions;
+    System.out.println("word2 psoitions: " + word2.positions);
     return word2;
 }
  
 List<Word> getAllWords() { 
     List<Word> words = new ArrayList<>();
+    List<Position> positions = new ArrayList<>();
+    Word word = null;
     StringBuilder w = new StringBuilder();
     Position start = null;
     Position end = null;
@@ -856,18 +877,24 @@ List<Word> getAllWords() {
                     end = new Position(row, col);
                 }
                 w.append(letter);
+                positions.add(new Position(row, col));
             } else if (w.length() > 1) {
-                words.add(new Word(w.toString(), start, end));
+                word = new Word(w.toString(), start, end);
+                word.positions = positions;
+                words.add(word);
                 w.setLength(0);
+                positions = new ArrayList<>();
             }
         }
         // Falls nach der letzten Spalte noch ein Wort übrig ist
         if (w.length() > 1) {
-            words.add(new Word(w.toString(), start, end));
+            word = new Word(w.toString(), start, end);
+            word.positions = positions;
+            words.add(word);
         }
+        positions = new ArrayList<>();
         w.setLength(0);
     }
-
     // Wörter aus Spalten extrahieren
     for (int col = 0; col < this.updatedBoard[0].length; col++) {
         for (int row = 0; row < this.updatedBoard.length; row++) {
@@ -880,15 +907,22 @@ List<Word> getAllWords() {
                     end = new Position(row, col);
                 }
                 w.append(letter);
-            } else if (w.length() > 1) {
-                words.add(new Word(w.toString(), start, end));
+                positions.add(new Position(row, col));
+            } else if (w.length() > 1) {   
+                word = new Word(w.toString(), start, end);
+                word.positions = positions;
+                words.add(word);
                 w.setLength(0);
+                positions = new ArrayList<>();
             }
         }
         // Falls nach der letzten Zeile noch ein Wort übrig ist
         if (w.length() > 1) {
-            words.add(new Word(w.toString(), start, end));
+            word = new Word(w.toString(), start, end);
+            word.positions = positions;
+            words.add(word);
         }
+        positions = new ArrayList<>();
         w.setLength(0);
     }
     return words;
@@ -901,7 +935,7 @@ List<Word> getWrongWords(List<Word> allWords, List<Word> words){
 
     for (int i = 0; i < allWords2.size(); i++) {
         for (int j = 0; j < words2.size(); j++) {
-            System.out.println("i: " + i + "j" + j);
+            //System.out.println("i: " + i + "j" + j);
             if(allWords2.get(i).equals(this.firstWord)){
                 allWords2.get(i).validated = true; //das erste Wort muss nicht überprüft werden, ob es zusammenhängend ist
             }
