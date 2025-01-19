@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
 /* 
@@ -101,7 +102,7 @@ class Player01 {
     }
 }
 
-class Position{
+class Position implements Comparable<Position>{
 
     int x;
     int y;
@@ -133,6 +134,22 @@ class Position{
     public int hashCode() {
         return Objects.hash(x, y);
     }
+
+    @Override
+public int compareTo(Position other) {
+    // Vergleiche nur, wenn x gleich ist, dann nach y sortieren
+    if (this.x == other.x) {
+        return Integer.compare(this.y, other.y);
+    }
+    // Wenn y gleich ist, dann nach x sortieren
+    if (this.y == other.y) {
+        return Integer.compare(this.x, other.x);
+    }
+    // Falls weder x noch y gleich ist
+    throw new IllegalArgumentException("Cannot compare positions");
+}
+
+
     @Override
     public String toString() {
         return "Position{x = " + x + ", y = " + y + "}";
@@ -282,12 +299,12 @@ class Scrabble01 implements Clerk{
                 getTile(x, y);
                 updateBoard(x, y);
                 getFirstWord(x, y); 
-               // updateWrongWords(x, y); //wenn wrongWords nicht leer, und wieder auf Position geklickt wird, entferne dieses 
+                //updateWrongWords(x, y); //wenn wrongWords nicht leer, und wieder auf Position geklickt wird, entferne dieses 
                 
-                /* 
-                 if (endTurn(x, y)){
+                
+                 if(endTurn(x, y)){
                     overrideUpdatedBoard();
-                    this.wrongWords = new ArrayList<>(getWrongWords(getAllWords(), getWords(this.updatedBoard))); //wrong words wieder aus updatedBoard löschen 
+                    this.wrongWords = getWrongWords(getAllWords(), getWords(this.updatedBoard)); //wrong words wieder aus updatedBoard löschen 
                     System.out.println("wrongWords" + this.wrongWords);
 
                     if(this.wrongWords.isEmpty()){ //dann kann weitergespielt werden
@@ -310,19 +327,19 @@ class Scrabble01 implements Clerk{
                             throwError(w);
                         }
                         //clearCurrentBoard();//so können tiles nicht mehr vom board genommen werden
-               
+               /* 
                 sonst Fehlerausgabe an Positionen von getWrongWords 
                  * updatedBoard wieder currentWord-Positionen löschen 
-              
+              */
                 }  
-            }*/
+            }
         });
     } 
 
 void changeTiles(int x, int y){
 
 }
-/* 
+
 void updateWrongWords(int x, int y){
     for(Word word: this.wrongWords){
         int startX = word.start.x;
@@ -368,20 +385,7 @@ void updateWrongWords(int x, int y){
     }
 }
 }
-      /* 
-        if(this.firstWord.start.x <= x && this.firstWord.start.y <= y){ //gleich weil in einer Reihe/ Spalte x oder y muss gleich sein
-            this.firstWord.start = new Position(x, y);
-            fWord.insert(0, this.currentBoard[x][y]);
-        } else if(this.firstWord.end.x >= x && this.firstWord.end.y >= y){
-            fWord.append(this.currentBoard[x][y]);
-        } else if(this.firstWord.start.x >= x && this.firstWord.start.y >= y && this.firstWord.end.x <= x && this.firstWord.end.y <= y){ //liegt in der Mitte
-            if(this.firstWord.start.x == x){
-                fWord.insert(y - this.firstWord.start.y, this.currentBoard[x][y]);//wenn es in gleicher Reihe ist an Stelle x - start oder y - start
-             } else if(this.firstWord.start.y == y){
-                fWord.insert(x - this.firstWord.start.x, this.currentBoard[x][y]);
-             }
-             this.firstWord.word = fWord;
-            }*/
+
             void getFirstWord(int x, int y){
                 if(this.isFirstWord && x >= 0 && x <= 14 && y >= 3 && y <= 17){
                     
@@ -401,7 +405,9 @@ void updateWrongWords(int x, int y){
                       
                      //Positionen und Buchstaben entfernen
                     }
-                    if(this.firstWord.positions.size() > 0) {
+                    if(!(this.firstWord.positions.size() > 0)) {
+                        this.firstWord.addPosition(x, y);
+                    } else {
                      if(((x) == (this.firstWord.positions.get(lastPos).x) && (x) == (this.firstWord.positions.get(0).x)) || ((y) == (this.firstWord.positions.get(lastPos).y) && (y) == (this.firstWord.positions.get(0).y))){ //Wenn startPosition und vorletzte Position von x oder y gleich, dann ist es immernoch das erste Wort
                          System.out.println("reingeschafft");
                          
@@ -414,42 +420,24 @@ void updateWrongWords(int x, int y){
                          //entferne Buchstaben an der Position, entferne entweder vorderen oder hinteren Teilstring 
                          //firstClick in fPos an erster Stelle 
                          //dann passiert nichts, vom ersten Wort aus die getWords verwenden. Wenn Buchstabe wieder vom Board genommen wird
+                    } else { //wenn auf play gedrückt wurde auch nicht mehr first Word
+                        this.isFirstWord = false;
+                         StringBuilder fWord = new StringBuilder(); 
+                         Collections.sort(this.firstWord.positions); //wenn Positionen nicht aneinanderhängend sind?
+                        
+                    
+                        for(Position pos: this.firstWord.positions){
+                            x = pos.x;
+                            y = pos.y;
+                            System.out.println("currentBoard: " + this.currentBoard[x][y]);
+                            fWord.append(this.currentBoard[x][y]);
                         }
-                    } else {
-                        this.firstWord.addPosition(x, y);
+                        this.firstWord.word = fWord.toString(); 
+                        
                     }
-                  }
-                } 
-                 
-                
-                 /*else {
-        this.isFirstWord = false;
-        StringBuilder fWord = new StringBuilder(); //von erstem Click nach links oder unten gehen 
-        if(this.fPos.get(0).x == this.fPos.get(fPos.size()).x){
-            while(this.currentBoard[x-1][y] != "0"){
-            //laufe x entlang (nach links)
-            x--;
-            } //setze Wort nach rechts zusammen
-            this.firstWord.start = new Position(x, y);
-            while (this.currentBoard[x][y] != "0") {
-                fWord.append(this.currentBoard[x][y]);
-                x++;
-            }
-            this.firstWord.end = new Position(x - 1, y);
-        }
-        else if(this.fPos.get(0).y == this.fPos.get(fPos.size()).y){
-            while(this.currentBoard[x][y-1] != "0"){
-                //laufe x entlang (nach links)
-                y--;
-                } 
-                this.firstWord.start = new Position(x, y);
-                while (this.currentBoard[x][y] != "0") {
-                    this.fWord.append(this.currentBoard[x][y]);
-                    y++;
                 }
-                this.firstWord.end = new Position(x, y - 1);
             }
-        }*/
+        }
 
 void chooseLevel(int x, int y){
 
@@ -816,11 +804,10 @@ Word extractWordHorizontal(int x, int y, Position pos, String[][] board1) {
     //gehe nach rechts setze wort zusammen
     while (y < board1.length && !(board1[x][y].equals("0"))) {
         w.append(board1[x][y]);
-        for (Position position : pos.positions) {
             if(pos.x == x && pos.y == y){
                 pos.checkLeft = false; //wenn bereits an pos vorbeigelaufen, muss nicht mehr nach links überprüft werden (Reihe schon geprüft)
+                System.out.println(pos.checkLeft);
             }
-        }
         y++;
     }
     Position end = new Position(x, y-1);
@@ -840,11 +827,10 @@ Word extractWordVertical(int x, int y, Position pos, String[][] board1) {
     //nach unten und wort zusammensetzen
     while (x < board1.length && !(board1[x][y].equals("0"))) {
         w.append(board1[x][y]);
-        for (Position position : pos.positions) {
             if(pos.x == x && pos.y == y){
                 pos.checkDown = false;
+                System.out.println(pos.checkDown);
             }
-        }
         x++;
     }
     Position end = new Position(x-1, y);
@@ -852,7 +838,7 @@ Word extractWordVertical(int x, int y, Position pos, String[][] board1) {
     return word2;
 }
  
-List<Word> getAllWords() {
+List<Word> getAllWords() { 
     List<Word> words = new ArrayList<>();
     StringBuilder w = new StringBuilder();
     Position start = null;
