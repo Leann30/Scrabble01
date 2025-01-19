@@ -231,18 +231,22 @@ class Scrabble01{
     setTile2(x, y, letter){
         this.ctxBoard.beginPath();
         this.ctxBoard.fillStyle = "rgb(191, 245, 239)";
-        this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize + 8, this.squareSize, this.squareSize);
         this.ctxBoard.strokeStyle = "black"; 
         this.ctxBoard.lineWidth = 2; 
-        this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize + 8, this.squareSize, this.squareSize);
+        this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize + 8, this.squareSize, this.squareSize);
+        
         const textX = x * this.squareSize + this.squareSize / 3; 
-        
-        let textY = y * this.squareSize + (this.squareSize/ 1.5) + 8; 
-
-        if(y < 3){
-            textY = y * this.squareSize + (this.squareSize/ 1.5);
+        let textY = y * this.squareSize + (this.squareSize/ 1.5);
+     
+        if(y < 15){
+            textY = y * this.squareSize + (this.squareSize/ 1.5) + 8;
+            this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize + 8, this.squareSize, this.squareSize);
+            this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize + 8, this.squareSize, this.squareSize);
+        } else {
+            textY = y * this.squareSize + (this.squareSize/ 1.5) + 16; 
+            this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize + 16, this.squareSize, this.squareSize);
+            this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize + 16, this.squareSize, this.squareSize);
         }
-        
         this.ctxBoard.font = "bold 14px verdana, sans-serif";
         this.ctxBoard.fillStyle = "black";
         this.ctxBoard.fillText(letter, textX, textY);
@@ -330,7 +334,7 @@ class Scrabble01{
         this.ctxBoard.beginPath();
         this.ctxBoard.strokeStyle = "red";
         this.ctxBoard.fillStyle = "rgba(255, 0, 0, 0.3)"; 
-        this.ctxBoard.lineWidth = 4; 
+        this.ctxBoard.lineWidth = 1; 
         if(startX == endX){ //Wort in Spalte
             this.ctxBoard.strokeRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize, this.squareSize * (endY-startY+1)); //weil Spielfeld bei 0 beginn
             this.ctxBoard.fillRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize, this.squareSize * (endY-startY+1));

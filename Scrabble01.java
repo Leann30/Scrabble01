@@ -11,11 +11,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
 /* 
-NOCH ZU TUN:
--> funktionieren getWords richtig?
--> firstWord als Wort 
--> wrongWords verbessern
+HEUTE:
+-> keine Fehler für einzelne Buchstaben
 -> changeTiles schreiben, button hinzufügen <->
+-> kann ich firstWord richtig legen? - NEIN
+
+NOCH ZU TUN:
 -> Schwierigkeitseinstellungen
 -> erhöht sich Score Anzeige?
 -> Hilfsfunktion 
@@ -306,10 +307,10 @@ class Scrabble01 implements Clerk{
                  if(endTurn(x, y)){
                     overrideUpdatedBoard(); //currentBoard wird hinzugefügt
                     this.wrongWords = getWrongWords(getAllWords(), getWords(this.updatedBoard)); 
-                    System.out.println("wrongWords" + this.wrongWords);
+                    //System.out.println("wrongWords" + this.wrongWords);
 
                     if(this.wrongWords.isEmpty()){ //dann kann weitergespielt werden
-                        //Score mit in dieser Runde gesetzten Wörtern erhöhen    
+                        //Score mit in dieser Runde gesetzten Wörtern erhöhen 
                         List<Word> scoredWords = getWords(this.currentBoard);
                         for(Word scWord: scoredWords){
                             if(this.currentPlayer > 0){
@@ -324,7 +325,7 @@ class Scrabble01 implements Clerk{
                         turn();
                     } else {
                         for(Word w: this.wrongWords){
-                            System.out.println("wrong word" + w);
+                            //System.out.println("wrong word" + w);
                             throwError(w);
                         }
                         this.wrongWords = null;
@@ -352,104 +353,58 @@ void deleteCurrentFromUpdated(){
     }
     
 }
-void updateWrongWords(int x, int y){
-    for(Word word: this.wrongWords){
-        int startX = word.start.x;
-        int startY = word.start.y;
-        int endX = word.end.x;
-        int endY = word.end.y;
 
-        String strWord = word.word;
-        //wenn Position am Anfang oder Ende des Wortes entfernt einfach entfernen
-        if(x == startX && y == startY){
-            //entferne ersten Buchstaben
-            word.word = word.word.substring(1);
-        } else if(x == endX && y == endY){
-            //entferne letzten Buchstaben 
-            word.word = word.word.substring(0, word.word.length() - 1);
-        } 
-        if(startX == endX && x == startX){ //in einer Reihe
-            for(int i = startY; i <= endY; i++){ //gehe wortPositinen Y durch 
-               if(i == y){
-                String str1 = strWord.substring(0, i - startY);
-                String str2 = strWord.substring(i - startY + 1);
 
-                this.wrongWords.add(new Word(str1, new Position(startX, startY), new Position(endX, endY-i)));
-                this.wrongWords.add(new Word(str2, new Position(startX, startY+i), new Position(endX, endY)));
-                this.wrongWords.remove(word);
-               }
-                //wenn in der Mitte, splitte das Wort an Positin die entfernt werden soll und speichere als 2 neue Wörter 
-            } 
-        } else if(startY == endY && y == startY){ //in einer Spalte
-            for(int i = startX; i <= endX; i++){ //gehe wortPositinen X durch 
-                if(i == x){
-                    String str1 = strWord.substring(0, i - startY);
-                    String str2 = strWord.substring(i - startY + 1);
-                    this.wrongWords.add(new Word(str1, new Position(startX, startY), new Position(endX-i, endY)));
-                    this.wrongWords.add(new Word(str2, new Position(startX+i, startY), new Position(endX, endX)));
-                    this.wrongWords.remove(word);
-                }
-                 //wenn in der Mitte, splitte das Wort an Positin die entfernt werden soll und speichere als 2 neue Wörter 
-             } 
-       //in gleicher Reihe/ Spalte 
-       //dementsprechend kleinstes x oder y und größtest
-       //prüfe nochmal, ob Wörter validiert werden können
-    }
-}
-}
-
-            void getFirstWord(int x, int y){
-                if(this.isFirstWord && x >= 0 && x <= 14 && y >= 3 && y <= 17){
+void getFirstWord(int x, int y){
+    if(this.isFirstWord && x >= 0 && x <= 14 && y >= 3 && y <= 17){
                     
-                    int lastPos = 0;
-                     y -= 3;
-                     System.out.println("y: " + y);
+    int lastPos = 0;
+    y -= 3;
+    System.out.println("y: " + y);
                      //System.out.println("positionen des erstenWorts: " + this.firstWord.getSizePosition());
                      /* hole Positionen für firstWord
                       * setze von dort aus erstes Wort zusammen 
                     */
                      //baue String zusammen und speichere start und end-Position (Buchstaben hinzufügen)
-                    if(this.firstWord.positions.size() > 1){
-                         lastPos = this.firstWord.positions.size()-2;
-                         System.out.println("x: " + x + " , vorheriges x: " + this.firstWord.positions.get(lastPos).x);
-                         System.out.println("y: " + y + " , vorheriges y: " + this.firstWord.positions.get(lastPos).y);
+    if(this.firstWord.positions.size() > 1){
+        lastPos = this.firstWord.positions.size()-2;
+                         //System.out.println("x: " + x + " , vorheriges x: " + this.firstWord.positions.get(lastPos).x);
+                         //System.out.println("y: " + y + " , vorheriges y: " + this.firstWord.positions.get(lastPos).y);
                     
                       
                      //Positionen und Buchstaben entfernen
-                    }
-                    if(!(this.firstWord.positions.size() > 0)) {
-                        this.firstWord.addPosition(x, y);
-                    } else {
-                     if(((x) == (this.firstWord.positions.get(lastPos).x) && (x) == (this.firstWord.positions.get(0).x)) || ((y) == (this.firstWord.positions.get(lastPos).y) && (y) == (this.firstWord.positions.get(0).y))){ //Wenn startPosition und vorletzte Position von x oder y gleich, dann ist es immernoch das erste Wort
-                         System.out.println("reingeschafft");
+        }
+        if(!(this.firstWord.positions.size() > 0)) {
+            this.firstWord.addPosition(x, y);
+        } else {
+            if(((x) == (this.firstWord.positions.get(lastPos).x) && (x) == (this.firstWord.positions.get(0).x)) || ((y) == (this.firstWord.positions.get(lastPos).y) && (y) == (this.firstWord.positions.get(0).y))){ //Wenn startPosition und vorletzte Position von x oder y gleich, dann ist es immernoch das erste Wort
+                         //System.out.println("reingeschafft");
                          
-                         if(this.firstWord.positions.contains(new Position(x, y))){
-                            this.firstWord.positions.remove(new Position(x, y));
-                        } else if(!(this.firstWord.positions.contains(new Position(x, y)))){
-                            this.firstWord.addPosition(x, y);
-                        }
+                if(this.firstWord.positions.contains(new Position(x, y))){
+                    this.firstWord.positions.remove(new Position(x, y));
+                } else if(!(this.firstWord.positions.contains(new Position(x, y)))){
+                    this.firstWord.addPosition(x, y);
+                }
                             //falls noch mal auf die gleiche Position geklickt wird, entferne diese wieder, wenn auf Position geklickt wurde, die bereits in fPos gespeichert ist
                          //entferne Buchstaben an der Position, entferne entweder vorderen oder hinteren Teilstring 
                          //firstClick in fPos an erster Stelle 
                          //dann passiert nichts, vom ersten Wort aus die getWords verwenden. Wenn Buchstabe wieder vom Board genommen wird
-                    } else { //wenn auf play gedrückt wurde auch nicht mehr first Word
-                        this.isFirstWord = false;
-                         StringBuilder fWord = new StringBuilder(); 
-                         Collections.sort(this.firstWord.positions); //wenn Positionen nicht aneinanderhängend sind?
+            } else { //wenn auf play gedrückt wurde auch nicht mehr first Word
+                this.isFirstWord = false;
+                StringBuilder fWord = new StringBuilder(); 
+                Collections.sort(this.firstWord.positions); //wenn Positionen nicht aneinanderhängend sind?
                         
-                    
-                        for(Position pos: this.firstWord.positions){
-                            x = pos.x;
-                            y = pos.y;
-                            System.out.println("currentBoard: " + this.currentBoard[x][y]);
-                            fWord.append(this.currentBoard[x][y]);
-                        }
-                        this.firstWord.word = fWord.toString(); 
-                        
-                    }
+                for(Position pos: this.firstWord.positions){
+                    x = pos.x;
+                    y = pos.y;
+                            //System.out.println("currentBoard: " + this.currentBoard[x][y]);
+                    fWord.append(this.currentBoard[x][y]);
                 }
+                this.firstWord.word = fWord.toString(); 
             }
         }
+    }
+}
 
 void chooseLevel(int x, int y){
 
@@ -969,10 +924,19 @@ List<Word> words = List.of(
     );
  */
 boolean validateWord(String input) {
-   
+    // Großer Anfangsbuchstabe, kleiner Anfangsbuchstabe. Wenn eins von beiden passt, passts
     assert input.length() > 1;
+
+    String input1 = input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
+    String input2 = input.toLowerCase();
+
+    // Funktion für die Validierung des Wortes
+    return isValidWord(input1) || isValidWord(input2);
+}
+
+private boolean isValidWord(String word) {
     try {
-        URI uri = URI.create("https://www.dwds.de/api/wb/snippet/?q=" + input);
+        URI uri = URI.create("https://www.dwds.de/api/wb/snippet/?q=" + word);
         URL url = uri.toURL();
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
@@ -989,14 +953,15 @@ boolean validateWord(String input) {
         in.close();
 
         // JSON als String durchsuchen
-        String jsonResponse = response.toString().toLowerCase();
-        return jsonResponse.contains("\"wortart\":") && jsonResponse.contains("\"lemma\":");
-
+        String jsonResponse = response.toString();
+        System.out.println(jsonResponse);
+        return jsonResponse.contains("\"lemma\":");
     } catch (Exception e) {
         e.printStackTrace();
         return false;
     }
-} 
+}
+
 
 String getRandWord(){
     //ersten Buchstaben immer an pos [6][3] setzen (oder random i, j?)
