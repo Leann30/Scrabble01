@@ -9,16 +9,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 /* 
 HEUTE:
--> keine Fehler für einzelne Buchstaben
 -> changeTiles schreiben, button hinzufügen <->
--> kann ich firstWord richtig legen? - NEIN
 
 NOCH ZU TUN:
+-> score Anzeige erhöhen
+-> nach Legen tiles wieder ausffüllen
 -> Schwierigkeitseinstellungen
--> erhöht sich Score Anzeige?
 -> Hilfsfunktion 
 -> Spracheinstellung 
 -> map ändern 
@@ -124,10 +124,10 @@ class Position implements Comparable<Position>{
         positions = new ArrayList<>();
     }
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        Position position = (Position) obj;
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        Position position = (Position) other;
         return x == position.x && y == position.y;
     }
     
@@ -181,6 +181,19 @@ class Word{
     int getSizePosition(){
         return this.positions.size();
     }
+    @Override
+    public boolean equals(Object other) { 
+        if (other == null) return false; // Null abwehren!
+        if (other == this) return true; // Bin ich's selbst?
+        if (other.getClass() != getClass()) return false; // Andere Klasse?
+        Word that = (Word)other; // Casting
+        return Objects.equals(new HashSet<>(this.positions), new HashSet<>(that.positions)); // Was definiert Gleichheit?
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(start, end);
+    }
 
     @Override
     public String toString() {
@@ -209,8 +222,9 @@ class Scrabble01 implements Clerk{
         char[] tilesBottom = new char[7];
         boolean isFirstWord = true;
         Word firstWord = new Word("", null, null); 
+        Position boardPositions = new Position(0, 0);
         //Position fPos = new Position(0,0);
-
+        
         List<String> specialFields = new ArrayList<>(List.of("DL", "TL", "DW", "TW", "NaN"));
 
         Map<String, Integer> letterScores = new HashMap<>(Map.ofEntries(
@@ -255,7 +269,11 @@ class Scrabble01 implements Clerk{
                     this.updatedBoard[i][j] = "0";
                 }
             }
-        
+            for (int row = 0; row < this.board.length; row++) {
+                for (int col = 0; col < this.board[0].length; col++) {
+                    this.boardPositions.addPosition(row, col);
+                }
+            }
             this.view = view;
             this.width  = Math.max(1, Math.abs(width));  // width is at least of size 1
             this.height = Math.max(1, Math.abs(height)); // height is at least of size 1
@@ -299,19 +317,22 @@ class Scrabble01 implements Clerk{
                 //aktueller Spieler legt Steine
                 getTile(x, y);
                 updateBoard(x, y);
-                getFirstWord(x, y); 
-                //updateWrongWords(x, y); //wenn wrongWords nicht leer, und wieder auf Position geklickt wird, entferne dieses 
-                
+
                 //ich hole Wörter von updated Board, wenn Fehlerausgabe, Buchstaben auf die nach Fehlerausgabe geklickt wurden, müssen auscurrentBoard und updatedBoard gelöscgt werden
                 //Dann muss updatedBoard wieder mit currentBoard überschrieben werden.
+                if(this.isFirstWord){ //hole bei ersten Cklicks das erste Wort
+                    getFirstWord(x, y); 
+                  //  System.out.println("erstes Wort: " + this.firstWord);
+                   // System.out.println("ist es erstes Wort?: " + this.isFirstWord);
+                }
                  if(endTurn(x, y)){
                     overrideUpdatedBoard(); //currentBoard wird hinzugefügt
-                    this.wrongWords = getWrongWords(getAllWords(), getWords(this.updatedBoard)); 
+                    this.wrongWords = getWrongWords(getWords(this.updatedBoard, this.boardPositions.positions), getWords(this.updatedBoard, this.firstWord.positions)); //alle Wörter durch jede Position des Bords, nur zusammenhängende duch firstWord-Positionen
                     //System.out.println("wrongWords" + this.wrongWords);
 
                     if(this.wrongWords.isEmpty()){ //dann kann weitergespielt werden
                         //Score mit in dieser Runde gesetzten Wörtern erhöhen 
-                        List<Word> scoredWords = getWords(this.currentBoard);
+                        List<Word> scoredWords = getWords(this.currentBoard, this.boardPositions.positions);
                         for(Word scWord: scoredWords){
                             if(this.currentPlayer > 0){
                                 player1.score += updateScore(scWord); //Zeichne score mit neuem Wert 
@@ -353,7 +374,6 @@ void deleteCurrentFromUpdated(){
     }
     
 }
-
 
 void getFirstWord(int x, int y){
     if(this.isFirstWord && x >= 0 && x <= 14 && y >= 3 && y <= 17){
@@ -398,7 +418,7 @@ void getFirstWord(int x, int y){
                     x = pos.x;
                     y = pos.y;
                             //System.out.println("currentBoard: " + this.currentBoard[x][y]);
-                    fWord.append(this.currentBoard[x][y]);
+                    fWord.append(this.updatedBoard[x][y]);
                 }
                 this.firstWord.word = fWord.toString(); 
             }
@@ -636,131 +656,100 @@ int mulScore(int x, int y){
     }
 }
 
-    /*
-/o lvp.java
-/o Views/Scrabble01/Scrabble01.java
-Scrabble01 scrabble = new Scrabble01()
-System.out.println(scrabble.toString());
-
- scrabble.currentBoard[0][0] = "B"
- scrabble.currentBoard[0][1] = "A"
- scrabble.currentBoard[1][0] = "A"
- scrabble.currentBoard[0][2] = "U"
- scrabble.currentBoard[2][0] = "U"
- scrabble.currentBoard[0][3] = "M"
- scrabble.currentBoard[3][0] = "M"
-
-scrabble.currentBoard[0][0] = "A";
-        scrabble.currentBoard[0][1] = "B";
-        scrabble.currentBoard[0][2] = "B";
-        scrabble.currentBoard[0][3] = "I";
-        scrabble.currentBoard[0][4] = "L";
-        scrabble.currentBoard[0][5] = "D";
-        scrabble.currentBoard[0][6] = "U";
-        scrabble.currentBoard[0][7] = "N";
-        scrabble.currentBoard[0][8] = "G";
-        scrabble.currentBoard[0][9] = "S";
-        scrabble.currentBoard[0][10] = "E";
-        scrabble.currentBoard[0][11] = "B";
-        scrabble.currentBoard[0][12] = "E";
-        scrabble.currentBoard[0][13] = "N";
-        scrabble.currentBoard[0][14] = "E";
-
-scrabble.currentBoard[0][14] = "E";
-        scrabble.currentBoard[1][14] = "B";
-        scrabble.currentBoard[2][14] = "E";
-        scrabble.currentBoard[3][14] = "N";
-        scrabble.currentBoard[4][14] = "H";
-        scrabble.currentBoard[5][14] = "O";
-        scrabble.currentBoard[6][14] = "L";
-        scrabble.currentBoard[7][14] = "Z";
-        scrabble.currentBoard[8][14] = "G";
-        scrabble.currentBoard[9][14] = "E";
-        scrabble.currentBoard[10][14] = "W";
-        scrabble.currentBoard[11][14] = "Ä";
-        scrabble.currentBoard[12][14] = "C";
-        scrabble.currentBoard[13][14] = "H";
-        scrabble.currentBoard[14][14] = "S";
-
-        scrabble.board[0][0] = "A";
-        scrabble.board[0][1] = "B";
-        scrabble.board[0][2] = "B";
-        scrabble.board[0][3] = "I";
-        scrabble.board[0][4] = "L";
-        scrabble.board[0][5] = "D";
-        scrabble.board[0][6] = "U";
-        scrabble.board[0][7] = "N";
-        scrabble.board[0][8] = "G";
-        scrabble.board[0][9] = "S";
-        scrabble.board[0][10] = "E";
-        scrabble.board[0][11] = "B";
-        scrabble.board[0][12] = "E";
-        scrabble.board[0][13] = "N";
-        scrabble.board[0][14] = "E";
-
-        scrabble.board[0][14] = "E";
-        scrabble.board[1][14] = "B";
-        scrabble.board[2][14] = "E";
-        scrabble.board[3][14] = "N";
-        scrabble.board[4][14] = "H";
-        scrabble.board[5][14] = "O";
-        scrabble.board[6][14] = "L";
-        scrabble.board[7][14] = "Z";
-        scrabble.board[8][14] = "G";
-        scrabble.board[9][14] = "E";
-        scrabble.board[10][14] = "W";
-        scrabble.board[11][14] = "Ä";
-        scrabble.board[12][14] = "C";
-        scrabble.board[13][14] = "H";
-        scrabble.board[14][14] = "S";
-
- scrabble.board[0][0] = "B"
- scrabble.board[0][1] = "A"
- scrabble.board[1][0] = "A"
- scrabble.board[0][2] = "U"
- scrabble.board[2][0] = "U"
- scrabble.board[0][3] = "M"
- scrabble.board[3][0] = "M"
-
-scrabble.board[3][1] = "A"
-scrabble.board[3][2] = "U"
-scrabble.board[3][3] = "E"
-scrabble.board[3][4] = "R"
-
-scrabble.currentBoard[3][14] = "P"
-scrabble.currentBoard[4][14] = "F"
-scrabble.currentBoard[5][14] = "A"
-scrabble.currentBoard[6][14] = "U"
-
-scrabble.getWords()
-*/ 
-List<Word> getWords(String[][] actualBoard) { 
+List<Word> getWords(String[][] actualBoard, List<Position> positions) { 
     //wholeWords von updated Board
     //Wörter müssen alle an firstWord hängen, von Positionen des ersten Wortes alle anhängenden Wörter holen
     List<Word> extractedWords = new ArrayList<>();
+    Set<Word> uniqueWords = new HashSet<>();
+    
     //Position pos = new Position(0, 0);
-    for (Position position : this.firstWord.positions) { 
-
+    for (Position position : positions) { 
+      
         if (position.checkLeft) { 
-           Word wordH = extractWordHorizontal(position.x, position.y, position, actualBoard);
-
+           Word wordH = extractWordHorizontal(position.x, position.y, positions, actualBoard);
+          // System.out.println("wordH: " + wordH);
            if (wordH.word.length() > 1){
-             extractedWords.add(wordH);
-            }
-
+             uniqueWords.add(wordH);
+            } 
         }
+    
         if (position.checkDown) {
-            Word wordV = extractWordVertical(position.x, position.y, position, actualBoard);
+            Word wordV = extractWordVertical(position.x, position.y, positions, actualBoard);
+           // System.out.println("wordV: " + wordV);
+    
             if (wordV.word.length() > 1){
-              extractedWords.add(wordV);
+              uniqueWords.add(wordV);
+           
+            } else if(wordV.word.length() == 1){
+                int x = wordV.positions.get(0).x;
+                int y = wordV.positions.get(0).y;
+
+                //(x < 14 && x > 1 && y < 14 && y > 1)
+                if(x < 1 && x < 14 && y < 14 && y > 1){
+                    if(actualBoard[x+1][y].equals("0") && actualBoard[x][y+1].equals("0") && actualBoard[x][y-1].equals("0")){
+                        uniqueWords.add(wordV);
+                
+                    }
+                } else if(x > 13 && x < 1 && y < 14 && y > 1){
+                    if(actualBoard[x-1][y].equals("0") && actualBoard[x][y+1].equals("0") && actualBoard[x][y-1].equals("0")){
+                        uniqueWords.add(wordV);
+                 
+                    }
+                } else if(y < 1 && x > 1 && x < 14 && y < 14){
+                    if(actualBoard[x+1][y].equals("0") && actualBoard[x-1][y].equals("0") && actualBoard[x][y+1].equals("0")){
+                        uniqueWords.add(wordV);
+                   
+                    }
+                } else if(y > 13 && x < 1 && y < 14 && y > 1){
+                    if(actualBoard[x+1][y].equals("0") && actualBoard[x-1][y].equals("0") && actualBoard[x][y-1].equals("0")){
+                        uniqueWords.add(wordV);
+                      
+                    }
+                } else if(x < 1 && y < 1 && x < 14 && y < 14){
+                    if(actualBoard[x+1][y].equals("0") && actualBoard[x][y+1].equals("0")){
+                        uniqueWords.add(wordV);
+                        
+                    }
+                } else if(x < 1 && y > 13 && x < 14 && y > 1){
+                    if(actualBoard[x+1][y].equals("0") && actualBoard[x][y-1].equals("0")){
+                        uniqueWords.add(wordV);
+                       
+                    }
+                } else if(x > 13 && y < 1  && x > 1 && y < 14){
+                    if(actualBoard[x-1][y].equals("0") && actualBoard[x][y+1].equals("0")){
+                        uniqueWords.add(wordV);
+                   
+                    }
+                } else if(x > 13 && y > 13 && x > 1  && y > 1){
+                    if(actualBoard[x-1][y].equals("0") && actualBoard[x][y-1].equals("0")){
+                        uniqueWords.add(wordV);
+                      
+                    }
+                } else {
+                    if(actualBoard[x+1][y].equals("0") && actualBoard[x-1][y].equals("0") && actualBoard[x][y+1].equals("0") && actualBoard[x][y-1].equals("0")){
+                        uniqueWords.add(wordV);
+                      
+                }
             }
         }
-    position.clearPositions();
+            
+    }
+
+    //position.clearPositions();
+    }
+
+    for(Position position: positions){
+        position.checkLeft = true;
+        position.checkDown = true;
+    }
+   
+    for(Word w: uniqueWords){
+        extractedWords.add(w);
     }
     return extractedWords;
 }
 
-Word extractWordHorizontal(int x, int y, Position pos, String[][] board1) {
+Word extractWordHorizontal(int x, int y, List<Position> posi, String[][] board1) {
     StringBuilder w = new StringBuilder();
     List<Position> positions = new ArrayList<>();
 
@@ -774,9 +763,11 @@ Word extractWordHorizontal(int x, int y, Position pos, String[][] board1) {
     while (y < board1.length && !(board1[x][y].equals("0"))) {
         w.append(board1[x][y]);
         positions.add(new Position(x, y));
-            if(pos.x == x && pos.y == y){
-                pos.checkLeft = false; //wenn bereits an pos vorbeigelaufen, muss nicht mehr nach links überprüft werden (Reihe schon geprüft)
+        for(Position position: posi){
+            if(position.x == x && position.y == y){
+                position.checkLeft = false; //wenn bereits an pos vorbeigelaufen, muss nicht mehr nach links überprüft werden (Reihe schon geprüft)
             }
+        }
         y++;
     }
     Position end = new Position(x, y-1);
@@ -785,7 +776,7 @@ Word extractWordHorizontal(int x, int y, Position pos, String[][] board1) {
     return word2;
 }
 
-Word extractWordVertical(int x, int y, Position pos, String[][] board1) {
+Word extractWordVertical(int x, int y, List<Position> posi, String[][] board1) {
     StringBuilder w = new StringBuilder();
     List<Position> positions = new ArrayList<>();
 
@@ -799,20 +790,21 @@ Word extractWordVertical(int x, int y, Position pos, String[][] board1) {
     while (x < board1.length && !(board1[x][y].equals("0"))) {
         w.append(board1[x][y]);
         positions.add(new Position(x, y));
-            if(pos.x == x && pos.y == y){
-                pos.checkDown = false;
-                System.out.println(pos.checkDown);
+        for(Position position: posi){
+            if(position.x == x && position.y == y){
+                position.checkDown = false; //wenn bereits an pos vorbeigelaufen, muss nicht mehr nach links überprüft werden (Reihe schon geprüft)
             }
+        }
         x++;
     }
     Position end = new Position(x-1, y);
     Word word2 = new Word(w.toString(), start, end);
     word2.positions = positions;
-    System.out.println("word2 psoitions: " + word2.positions);
+    //Sout.println("word2 psoitions: " + word2.positions);
     return word2;
 }
  
-List<Word> getAllWords() { 
+/*List<Word> getAllWords(String[][] acutualBoard) {  //warum holt es sich nicht zusammenhängende Buchstaben als Würter, wenn sie in einer Reihe sind
     List<Word> words = new ArrayList<>();
     List<Position> positions = new ArrayList<>();
     Word word = null;
@@ -820,15 +812,15 @@ List<Word> getAllWords() {
     Position start = null;
     Position end = null;
     // Wörter aus Reihen extrahieren
-    for (int row = 0; row < this.updatedBoard.length; row++) {
-        for (int col = 0; col < this.updatedBoard[0].length; col++) {
-            String letter = this.updatedBoard[row][col];
+    for (int row = 0; row < acutualBoard.length; row++) {
+        for (int col = 0; col < acutualBoard[0].length; col++) {
+            String letter = acutualBoard[row][col];
 
             if (!letter.equals("0")) {
                 if (w.length() == 0) {
                     start = new Position(row, col);
                 }
-                if(col + 1 >= this.updatedBoard[row].length || this.updatedBoard[row][col+1].equals("0")){
+                if(col + 1 >= acutualBoard[row].length || acutualBoard[row][col+1].equals("0")){
                     end = new Position(row, col);
                 }
                 w.append(letter);
@@ -851,14 +843,14 @@ List<Word> getAllWords() {
         w.setLength(0);
     }
     // Wörter aus Spalten extrahieren
-    for (int col = 0; col < this.updatedBoard[0].length; col++) {
-        for (int row = 0; row < this.updatedBoard.length; row++) {
-            String letter = this.updatedBoard[row][col];
+    for (int col = 0; col < acutualBoard[0].length; col++) {
+        for (int row = 0; row < acutualBoard.length; row++) {
+            String letter = acutualBoard[row][col];
             if (!letter.equals("0")) {
                 if (w.length() == 0) {
                     start = new Position(row, col);
                 }
-                if(col + 1 >= this.updatedBoard[col].length || this.updatedBoard[row+1][col].equals("0")){
+                if(col + 1 >= acutualBoard[col].length || acutualBoard[row+1][col].equals("0")){
                     end = new Position(row, col);
                 }
                 w.append(letter);
@@ -881,32 +873,42 @@ List<Word> getAllWords() {
         w.setLength(0);
     }
     return words;
-}
+}*/
+
 
 List<Word> getWrongWords(List<Word> allWords, List<Word> words){
     List<Word> allWords2 = new ArrayList<>(allWords);
     List<Word> words2 = new ArrayList<>(words);
     List<Word> validatedWords = new ArrayList<>();
-
+    //System.out.println("allWords2: " + allWords2);
+    //System.out.println("words2: " + words2);
     for (int i = 0; i < allWords2.size(); i++) {
         for (int j = 0; j < words2.size(); j++) {
             //System.out.println("i: " + i + "j" + j);
-            if(allWords2.get(i).equals(this.firstWord)){
+           /*  if(allWords2.get(i).word.equals(this.firstWord.word)){
                 allWords2.get(i).validated = true; //das erste Wort muss nicht überprüft werden, ob es zusammenhängend ist
-            }
+            }*/
             if(allWords2.get(i).word.equals(words2.get(j).word) && allWords2.get(i).validated == false){
-                allWords2.get(i).validated = true;
                 validatedWords.add(allWords2.get(i)); //füge das Wort in validierte Liste 
                 allWords2.remove(i); // in allWords stehen nicht-zusammenhängende Wörter, die die übrig bleiben sind nicht validiert
+                //System.out.println("validatedWords: " + validatedWords);
+               // System.out.println("wrongWords: " + allWords2);
             }
         }
     }
+    if(validateWord(this.firstWord.word)){
+        validatedWords.add(this.firstWord);
+        allWords2.remove(this.firstWord);
+    }
+   // System.out.println("falsche Wörter: " + allWords2);
     for (Word word : words2) {
         if(!validateWord(word.word)){
             allWords2.add(word);
         } 
     }
-    this.wrongWords = new ArrayList<>(allWords);
+   // System.out.println("validatedWords: " + validatedWords);
+    //System.out.println("falsche Wörter: " + allWords2);
+    this.wrongWords = allWords2;
     return this.wrongWords;
 }
 /*
@@ -925,13 +927,16 @@ List<Word> words = List.of(
  */
 boolean validateWord(String input) {
     // Großer Anfangsbuchstabe, kleiner Anfangsbuchstabe. Wenn eins von beiden passt, passts
-    assert input.length() > 1;
+    if(input.length() < 2){
+        return false;
+    } else {
 
     String input1 = input.substring(0, 1).toUpperCase() + input.substring(1).toLowerCase();
     String input2 = input.toLowerCase();
 
     // Funktion für die Validierung des Wortes
     return isValidWord(input1) || isValidWord(input2);
+}
 }
 
 private boolean isValidWord(String word) {
@@ -954,7 +959,7 @@ private boolean isValidWord(String word) {
 
         // JSON als String durchsuchen
         String jsonResponse = response.toString();
-        System.out.println(jsonResponse);
+        //System.out.println(jsonResponse);
         return jsonResponse.contains("\"lemma\":");
     } catch (Exception e) {
         e.printStackTrace();
