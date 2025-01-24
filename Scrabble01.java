@@ -13,14 +13,14 @@ import java.util.HashSet;
 import java.util.Random;
 /* 
 HEUTE:
+-> Hilfsfunktion 
 -> warum bekomme ich manchmal mehrere Fehlermeldungen ?
 -> Board neu zeichnen
--> boobies (.)(.) 
 -> alphabet und getRandomElement benötigt Bag und Scrabble
 
 NOCH ZU TUN:
 -> Schwierigkeitseinstellungen
--> Hilfsfunktion 
+
 -> Spracheinstellung 
 -> map ändern 
 -> gehaltenen Buchstaben visualisieren 
@@ -107,6 +107,8 @@ class Player01 {
 
 class Position implements Comparable<Position>{
 
+    boolean player1 = false;
+    boolean player2 = false;
     int x;
     int y;
     boolean checkDown = true;
@@ -230,19 +232,18 @@ class Scrabble01 implements Clerk{
         
         List<String> specialFields = new ArrayList<>(List.of("DL", "TL", "DW", "TW", "NaN"));
 
-        String[] letters = {"A", "N", "T", "D", "B"};
-        Map<String, Integer> letterScores = new HashMap<>(Map.ofEntries(
-            Map.entry("A", 1), Map.entry("E", 1), Map.entry("I", 1), Map.entry("L", 1),
-            Map.entry("N", 1), Map.entry("O", 1), Map.entry("R", 1), Map.entry("S", 1),
-            Map.entry("T", 1), Map.entry("U", 1),
-            Map.entry("D", 2), Map.entry("G", 2), Map.entry("M", 2),
-            Map.entry("B", 3), Map.entry("C", 3), Map.entry("P", 3),
-            Map.entry("F", 4), Map.entry("H", 4), Map.entry("V", 4),
-            Map.entry("J", 8), Map.entry("Q", 8),
-            Map.entry("K", 10), Map.entry("W", 10), Map.entry("X", 10),
-            Map.entry("Y", 10), Map.entry("Z", 10)
-        ));
+        String[] alphabet = {
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+            "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
+    };
+    int[] scores = {
+            1, 3, 3, 2, 1, 4, 2, 4, 1, 8, 10, 1, 2,
+            1, 1, 3, 8, 1, 1, 1, 1, 4, 10, 10, 10, 10
+    };
 
+    Map<String, Integer> letterScores = new HashMap<>();
+    
+  
         //TW = 1, int DW = 2, int TL = 3, DL = 4, NaN
         String[][] board = {
             {"TW", "NaN", "NaN", "DL", "NaN", "NaN", "NaN", "TW", "NaN", "NaN", "NaN", "DL", "NaN", "NaN", "TW"},
@@ -267,6 +268,11 @@ class Scrabble01 implements Clerk{
     
         Scrabble01(LiveView view, int width, int height, Player01 player1, Player01 player2, Bag bag) {
 
+               //Befülle map für Buchstabenwerte 
+           for (int i = 0; i < alphabet.length; i++) {
+            letterScores.put(alphabet[i], scores[i]);
+        }
+            //initialisiere current und updated
             for (int i = 0; i < this.currentBoard.length; i++) {
                 for (int j = 0; j < this.currentBoard[i].length; j++) {
                     this.currentBoard[i][j] = "0";
@@ -298,7 +304,7 @@ class Scrabble01 implements Clerk{
            Clerk.script(view, "scrabble" + ID + ".drawScoreTop(" + player1.score + ");");
            Clerk.script(view, "scrabble" + ID + ".drawScoreBottom(" + player2.score + ");");
 
-
+         
             for (int i = 0; i < 7; i++) {
                 char letter1 = player1.bag.get(i);
                 this.tilesTop[i] = letter1; //fülle tilesTop auf in ausgelagerter Methode, if tilesTop[i] leer?
@@ -318,6 +324,7 @@ class Scrabble01 implements Clerk{
                 int y = Integer.parseInt(temp[1]);
                 System.out.println("" + x +" + " + y);
                 
+                drawScrabbleField();
                 //aktueller Spieler legt Steine
                 getTile(x, y);
                 updateBoard(x, y);
@@ -414,6 +421,106 @@ class Scrabble01 implements Clerk{
         });
     } 
 
+    void drawScrabbleField(){
+        //ArrayList<Word> removeW = new ArrayList<>(); 
+        
+            //y -= 3;
+            for(int i = 0; i < this.boardPositions.positions.size(); i++){
+                int x = boardPositions.positions.get(i).x;
+                int y = boardPositions.positions.get(i).y;
+                    if(this.boardPositions.positions.get(i).player1){
+                        if(!(this.updatedBoard[x][y].equals("0"))){
+                            Clerk.script(view, "scrabble" + ID + ".setTile1(" +  x + ", '" + (y + 3) + "', '" + this.updatedBoard[x][y] + "');");
+                        }
+                        if(!(this.currentBoard[x][y].equals("0"))){
+                            Clerk.script(view, "scrabble" + ID + ".setTile1(" +  x + ", '" + (y + 3) + "', '" + this.currentBoard[x][y] + "');");
+                            }
+                    } else if(this.boardPositions.positions.get(i).player2){
+                        if(!(this.updatedBoard[x][y].equals("0"))){
+                            System.out.println("updatedBoardTile: " + this.updatedBoard[x][y]);
+                            Clerk.script(view, "scrabble" + ID + ".setTile2(" + x  + ", '" + (y+3) + "', '" + this.updatedBoard[x][y] + "');");
+                        }
+                        if(!(this.currentBoard[x][y].equals("0"))){
+                            Clerk.script(view, "scrabble" + ID + ".setTile2(" +  x + ", '" + (y + 3) + "', '" + this.currentBoard[x][y] + "');");
+                            }
+                        }
+                    }
+            this.wrongWords = new ArrayList<>();
+   }
+
+   boolean isBoard(int x, int y){
+        return x <= 14 && x >= 0 && y <= 17 && y >= 3;
+   }
+
+
+
+
+
+/*wenn ich alle Permutationen habe,jeden Buchstaben einmal entfernen und Funktion mit übrig gebliebenen Buchstaben aufrufen 
+ aufrufen, bis letters empty */
+List<String> permutation(char[] letters) {
+    List<String> results = new ArrayList<>();
+
+    // Generiere alle Kombinationen der Buchstaben
+    List<List<Character>> combinations = generateCombinations(letters);
+
+    // Berechne Permutationen für jede Kombination
+    for (List<Character> combination : combinations) {
+        char[] combinationArray = listToCharArray(combination);
+        permute(combinationArray, 0, results);
+    }
+
+    return results;
+}
+
+// Methode zur Berechnung aller Kombinationen
+List<List<Character>> generateCombinations(char[] letters) {
+    List<List<Character>> combinations = new ArrayList<>();
+    int n = letters.length;
+
+    // Bitmasken-Ansatz, um alle Teilmengen zu generieren
+    for (int mask = 1; mask < (1 << n); mask++) { // Starte bei 1, um leere Menge zu vermeiden
+        List<Character> combination = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            if ((mask & (1 << i)) != 0) { // Prüfe, ob das i-te Bit gesetzt ist
+                combination.add(letters[i]);
+            }
+        }
+        combinations.add(combination);
+    }
+
+    return combinations;
+}
+
+// Rekursive Methode zur Berechnung der Permutationen
+void permute(char[] chars, int start, List<String> results) {
+    if (start == chars.length - 1) {
+        results.add(new String(chars)); // Aktuelle Permutation speichern
+        return;
+    }
+
+    for (int i = start; i < chars.length; i++) {
+        swap(chars, start, i);           // Tausche das aktuelle Zeichen nach vorne
+        permute(chars, start + 1, results); // Rekursion für den Rest
+        swap(chars, start, i);           // Rücktauschen
+    }
+}
+
+// Hilfsmethode, um zwei Zeichen im Array zu tauschen
+void swap(char[] chars, int i, int j) {
+    char temp = chars[i];
+    chars[i] = chars[j];
+    chars[j] = temp;
+}
+
+// Hilfsmethode, um eine List<Character> in ein char[] umzuwandeln
+char[] listToCharArray(List<Character> list) {
+    char[] array = new char[list.size()];
+    for (int i = 0; i < list.size(); i++) {
+        array[i] = list.get(i);
+    }
+    return array;
+}
     void getNewTiles(int x, int y) {
         int i = 0; // Counter for new tiles
         
@@ -447,6 +554,37 @@ class Scrabble01 implements Clerk{
             }
         }
     }
+
+    String bestScore(List<String> list){
+        int score = 0;
+        int currScore = 0;
+        List<String> validated = new ArrayList<>();
+        String bestWord = "";
+        int count = 1; //vergleiche nur 3 Wörter, sonst dauert es zu lang -> Trie Algorithmus
+        Collections.sort(list, Comparator.comparingInt(String::length).reversed()); //nach Länge der Strings absteigend sortieren
+
+            for(String str : list){
+                if(validateWord(str)){
+                for (int i = 0; i < str.length(); i++) {
+                    currScore += this.letterScores.get("" + str.charAt(i));
+                }
+                if(currScore > score){
+                    score = currScore;
+                    currScore = 0;
+                    bestWord = str;
+                    }
+                }
+                if(!(bestWord.equals(""))){
+                    count--;
+                } if(count == 0){
+                    return bestWord;
+                }
+            }
+            return "kein WIórt gefunden";
+        }
+
+
+
     char getRandomElement(List<Character> letterList){
         Random random = new Random();
         int rand = random.nextInt(letterList.size());
@@ -630,6 +768,13 @@ void updateBoard(int x, int y) {
         if (setzeTileBoard(x, y)) {
             Clerk.script(view, "scrabble" + ID + ".setTile1(" + x + ", '" + y + "', '" + this.tile + "');");
             this.currentBoard[x][y-3] = "" + this.tile;
+            
+            for(Position pos : this.boardPositions.positions){ //markiere, welcher Spieler auf welches Feld gelegt hat
+                if(pos.x == x && pos.y == y-3){
+                    pos.player1 = true;
+                }
+            }
+            
             this.emptyTiles();
         }
     }
@@ -638,6 +783,13 @@ void updateBoard(int x, int y) {
         if (setzeTileBoard(x, y)) {
             Clerk.script(view, "scrabble" + ID + ".setTile2(" + x + ", '" + y + "', '" + this.tile + "');");
             this.currentBoard[x][y-3] = "" + this.tile;
+
+            for(Position pos : this.boardPositions.positions){ //markiere, welcher Spieler auf welches Feld gelegt hat
+                if(pos.x == x && pos.y == y-3){
+                    pos.player2 = true;
+                }
+            }
+
             this.emptyTiles();
         }
     }
@@ -712,6 +864,14 @@ char getTile(int x, int y) {
         this.tileBoard = this.currentBoard[x][y-3].charAt(0); // Hole Stein vom Board
         this.tile = ' ';
         this.currentBoard[x][y-3] = "0"; // Entferne Stein vom Board
+
+        for(Position pos : this.boardPositions.positions){ //nehme Markierung vom Board
+            if(pos.x == x && pos.y == y-3){
+                pos.player1 = false;
+                pos.player2 = false;
+            }
+        }
+
         Clerk.script(view, "scrabble" + ID + ".setColor("+ (y-3) + ", '" + x + "');"); 
         Clerk.script(view, "scrabble" + ID + ".setText("+ (y-3) + ", '" + x + "');");
     }
