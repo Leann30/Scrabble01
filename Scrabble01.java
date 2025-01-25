@@ -13,17 +13,15 @@ import java.util.HashSet;
 import java.util.Random;
 /* 
 HEUTE:
--> Hilfsfunktion 
--> warum bekomme ich manchmal mehrere Fehlermeldungen ?
--> Board neu zeichnen
--> alphabet und getRandomElement benötigt Bag und Scrabble
+-> Hilfsfunktion ausprinten 
+-> Schwierigkeitseinstellungen
+-> warum bekomme ich manchmal mehrere Fehlermeldungen, warum ab bestimmtem Zug nicht mehr weiterspielen?
+
 
 NOCH ZU TUN:
--> Schwierigkeitseinstellungen
-
--> Spracheinstellung 
--> map ändern 
+-> alphabet und getRandomElement benötigt Bag und Scrabble -> Interface?? 
 -> gehaltenen Buchstaben visualisieren 
+-> Tiles Bottom rectangle fill an richtige Position
 
 SPIELABLAUF:
 
@@ -323,36 +321,45 @@ class Scrabble01 implements Clerk{
                 int x = Integer.parseInt(temp[0]);
                 int y = Integer.parseInt(temp[1]);
                 System.out.println("" + x +" + " + y);
-                
+
+                if(x >= 16 && x <= 18 && y == 3){
+                    List<String> toValidate = new ArrayList<>();
+                    if(this.currentPlayer > 0){
+                        toValidate = new ArrayList<>(help(permutation(this.tilesTop)));
+                        for(int i = 0; i < toValidate.size(); i++){
+                            if(!validateWord(toValidate.get(i))){
+                                toValidate.remove(i);
+                            }
+                        }
+                        System.out.println(bestScore(toValidate));
+                        String res = bestScore(toValidate);
+                        Clerk.script(view, "scrabble" + ID + ".helpMessage1(\"" + res + "\");");
+                    
+                    } else if(this.currentPlayer < 0){
+                        toValidate = new ArrayList<>(help(permutation(this.tilesBottom)));
+                        for(int i = 0; i < toValidate.size(); i++){
+                            if(!validateWord(toValidate.get(i))){
+                                toValidate.remove(i);
+                            }
+                        }
+                        System.out.println(bestScore(toValidate));
+                        String res = bestScore(toValidate);
+                        Clerk.script(view, "scrabble" + ID + ".helpMessage2(\"" + res + "\");");
+                    }
+                    
+                }
+
                 drawScrabbleField();
+
+                if(isGameOver(x, y)){
+                    end();
+                }
+
+                refillTiles(x, y);
                 //aktueller Spieler legt Steine
                 getTile(x, y);
                 updateBoard(x, y);
-
-            if(x >= 16 && x <= 18 && y == 13){
-                boolean refill = true;
-                if(this.currentPlayer > 0){
-                    for(char tile : this.tilesTop){
-                        if(tile == '0'){
-                            refill = false;
-                            break;
-                        } 
-                        if(refill){
-                            refillTiles();
-                        }
-                    } 
-                } else if(this.currentPlayer < 0){
-                    for(char tile : this.tilesBottom){
-                        if(tile == '0'){
-                            refill = false;
-                            break;
-                        } 
-                        if(refill){
-                            refillTiles();
-                        }
-                    } 
-                }
-            }
+                       
                 //ich hole Wörter von updated Board, wenn Fehlerausgabe, Buchstaben auf die nach Fehlerausgabe geklickt wurden, müssen auscurrentBoard und updatedBoard gelöscgt werden
                 //Dann muss updatedBoard wieder mit currentBoard überschrieben werden.
                 if(this.isFirstWord){ //hole bei ersten Cklicks das erste Wort
@@ -363,9 +370,9 @@ class Scrabble01 implements Clerk{
                  if(endTurn(x, y)){
                     overrideUpdatedBoard(); //currentBoard wird hinzugefügt
                     if (this.validatedWords.size() > 0) {
-                    List<Position> validatedPositions = new ArrayList<>();
-                    for (Word w : this.validatedWords) {
-                        validatedPositions.addAll(w.positions); // Alle Positionen aus jedem Wort hinzufügen
+                        List<Position> validatedPositions = new ArrayList<>();
+                        for (Word w : this.validatedWords) {
+                            validatedPositions.addAll(w.positions); // Alle Positionen aus jedem Wort hinzufügen
                         }
                         this.wrongWords = getWrongWords(getWords(this.updatedBoard, this.boardPositions.positions), getWords(this.updatedBoard, validatedPositions));
                     } else {
@@ -400,7 +407,6 @@ class Scrabble01 implements Clerk{
                         }
                         overrideBoard();
                         clearCurrentBoard();  
-                        isGameOver();
                         turn();
                     } else {
                         for(Word w: this.wrongWords){
@@ -420,6 +426,61 @@ class Scrabble01 implements Clerk{
             }
         });
     } 
+
+    void end(){
+        String message = "";
+        if(this.player1.score > this.player2.score){
+            message = "Spieler 1 gewinnt";
+        } else if(this.player1.score < this.player2.score){
+            message = "Spieler 2 gewinnt";
+        } else{
+            message = "unentschieden";
+        }
+        Clerk.script(view, "scrabble" + ID + ".win(\"" + message + "\");");
+    }
+    
+
+    void refillTiles(int x, int y){ //tausche alle tiles aus, aber mit random elementen aus dem Bag, damit nicht immer dieselben Kombinationen entstehen
+        Random random = new Random();
+        boolean refill = true;
+        if(x >= 16 && x <= 18 && y == 13){
+            if(this.currentPlayer > 0){ 
+                for(char tile : this.tilesTop){
+                    if(tile == '0'){ //man darf nur vor dem Zug einmal alle tiles tauschen
+                        refill = false;
+                        break;
+                    }
+                } 
+                if(refill){
+                    for (int i = 0; i < this.tilesTop.length; i++) {
+                        player1.bag.add(this.tilesTop[i]); //befüllen von tiesTpo
+                    //char randElement = getRandomElement(player1.bag);
+                        int rand = random.nextInt(player1.bag.size());
+                        this.tilesTop[i] = player1.bag.get(rand);
+                        player1.bag.remove(rand);
+                        }
+                    } 
+                } else if(this.currentPlayer < 0){
+                    for(char tile : this.tilesBottom){
+                        if(tile == '0'){
+                            refill = false;
+                            break;
+                        }
+                    }
+                    if(refill){
+                        for (int i = 0; i < this.tilesBottom.length; i++) {
+                        player2.bag.add(this.tilesBottom[i]);
+                        int rand = random.nextInt(player2.bag.size());
+                        this.tilesBottom[i] = player2.bag.get(rand);
+                        player2.bag.remove(rand);
+                    //System.out.println(this.tilesTop);
+                    //System.out.println(player1.bag);
+                        }
+                    }
+                }
+                drawTiles(); 
+            }
+        }
 
     void drawScrabbleField(){
         //ArrayList<Word> removeW = new ArrayList<>(); 
@@ -452,8 +513,35 @@ class Scrabble01 implements Clerk{
         return x <= 14 && x >= 0 && y <= 17 && y >= 3;
    }
 
+List<String> help(List<String> targetWords){
+        String filePath = "views/Scrabble01/wordlist-german.txt";
+        // Wortliste in ein Set laden
+        Set<String> wordSet = loadWordSet(filePath);
 
+        // Wörter prüfen
+        List<String> matchingWords = new ArrayList<>();
+        for (String word : targetWords) {
+            if (wordSet.contains(word.toUpperCase())) { // Effiziente Prüfung mit HashSet
+                matchingWords.add(word);
+            }
+        }
+        return matchingWords;
+    }
 
+    // Methode zum Einlesen der Wortliste in ein HashSet
+    Set<String> loadWordSet(String filePath) {
+        int counter = 0;
+        Set<String> wordSet = new HashSet<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                wordSet.add(line.trim().toUpperCase()); // Jedes Wort ins Set einfügen
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return wordSet;
+    }
 
 
 /*wenn ich alle Permutationen habe,jeden Buchstaben einmal entfernen und Funktion mit übrig gebliebenen Buchstaben aufrufen 
@@ -521,6 +609,8 @@ char[] listToCharArray(List<Character> list) {
     }
     return array;
 }
+
+
     void getNewTiles(int x, int y) {
         int i = 0; // Counter for new tiles
         
@@ -533,11 +623,12 @@ char[] listToCharArray(List<Character> list) {
                     player1.bag.remove(i);
                 }
             }
-            
-            for (int j = 0; j < this.tilesTop.length; j++) {
-                char letter = this.tilesTop[j];
-                Clerk.script(view, "scrabble" + ID + ".textTilesTop(" + j + ", '" + letter + "');");
+            for(char tile : this.tilesTop){
+                if(tile == '0'){
+                    break;
+                }
             }
+            drawTiles();
         } else {
             Clerk.script(view, "scrabble" + ID + ".drawTilesBottom();"); 
             
@@ -547,42 +638,36 @@ char[] listToCharArray(List<Character> list) {
                     player2.bag.remove(i);
                 }
             }
-            
-            for (int j = 0; j < this.tilesBottom.length; j++) {
-                char letter = this.tilesBottom[j];
-                Clerk.script(view, "scrabble" + ID + ".textTilesBottom(" + j + ", '" + letter + "');");
+            for(char tile : this.tilesBottom){
+                if(tile == '0'){
+                    break;
+                }
             }
+            drawTiles();
         }
     }
 
     String bestScore(List<String> list){
         int score = 0;
         int currScore = 0;
-        List<String> validated = new ArrayList<>();
         String bestWord = "";
-        int count = 1; //vergleiche nur 3 Wörter, sonst dauert es zu lang -> Trie Algorithmus
-        Collections.sort(list, Comparator.comparingInt(String::length).reversed()); //nach Länge der Strings absteigend sortieren
 
-            for(String str : list){
-                if(validateWord(str)){
-                for (int i = 0; i < str.length(); i++) {
-                    currScore += this.letterScores.get("" + str.charAt(i));
-                }
-                if(currScore > score){
-                    score = currScore;
-                    currScore = 0;
-                    bestWord = str;
-                    }
-                }
-                if(!(bestWord.equals(""))){
-                    count--;
-                } if(count == 0){
-                    return bestWord;
-                }
+        for(String str : list){
+            for(int i = 0; i < str.length(); i++){
+                currScore += this.letterScores.get("" + str.charAt(i));
             }
-            return "kein WIórt gefunden";
+            if(currScore > score){
+                score = currScore;
+                currScore = 0;
+                bestWord = str;
+            }
         }
-
+    if(score == 0){
+        return "kein Wort gefunden";
+    } else {
+        return bestWord;
+    }
+}
 
 
     char getRandomElement(List<Character> letterList){
@@ -593,10 +678,10 @@ char[] listToCharArray(List<Character> list) {
 
 void drawTiles(){
     if(this.currentPlayer > 0){
-    Clerk.script(view, "scrabble" + ID + ".drawTilesTop();");
-    for (int j = 0; j < this.tilesTop.length; j++) {
-        char letter = this.tilesTop[j];
-        Clerk.script(view, "scrabble" + ID + ".textTilesTop(" + j + ", '" + letter + "');");
+        Clerk.script(view, "scrabble" + ID + ".drawTilesTop();");
+        for (int j = 0; j < this.tilesTop.length; j++) {
+            char letter = this.tilesTop[j];
+            Clerk.script(view, "scrabble" + ID + ".textTilesTop(" + j + ", '" + letter + "');");
         }
     } else if(this.currentPlayer < 0){
         Clerk.script(view, "scrabble" + ID + ".drawTilesBottom();");
@@ -606,25 +691,6 @@ void drawTiles(){
         }
     }
 }
-
-void refillTiles(){ //tausche alle tiles aus, aber mit random elementen aus dem Bag, damit nicht immer dieselben Kombinationen entstehen
-   
-        if(this.currentPlayer > 0){ //man darf nur vor dem Zug einmal alle tiles tauschen
-            for (int i = 0; i < this.tilesTop.length-1; i++) {
-                player1.bag.add(this.tilesTop[i]);
-                this.tilesTop[i] = getRandomElement(player1.bag);
-                player1.bag.remove(i);
-            }
-
-        } else if(this.currentPlayer < 0){
-            for (int i = 0; i < this.tilesBottom.length-1; i++) {
-                player2.bag.add(this.tilesBottom[i]);
-                this.tilesBottom[i] = getRandomElement(player2.bag);
-                player2.bag.remove(i);
-            }
-        }
-        drawTiles();
-    }
 
 void deleteCurrentFromUpdated(){
     for (int row = 0; row < this.updatedBoard.length; row++) {
@@ -707,15 +773,8 @@ void throwError(Word w){
     Clerk.script(view, "scrabble" + ID + ".error(" + w.start.x + ", " + w.start.y + ", " + w.end.x + ", " + w.end.y + ");");
 }
 
-boolean isGameOver(){
-    return ((this.player1.bag.size() != 0) || (this.player2.bag.size() != 0)); // oder button für Aufgeben drücken
-    /*Strafpunkte: Jeder Spieler bekommt Strafpunkte für die Buchstaben, die er noch auf seinem Regal hat.
-    Bonus für das Ablegen aller Buchstaben: Der Spieler, der alle seine Buchstaben abgelegt hat, erhält eine Bonuspunktzahl, 
-    die die Summe der verbleibenden Buchstaben seiner Mitspieler ist.
-    /o lvp.java
-    /o Views/Scrabble01/Scrabble01.java
-    Scrabble01 scrabble = new Scrabble01()
-    */
+boolean isGameOver(int x, int y){
+    return ((this.player1.bag.size() == 0) || (this.player2.bag.size() == 0) || (x >= 16 && x <= 18 && y == 19)); 
 }
 boolean endTurn(int x, int y){
     if(x >= 16 && x <= 18 && y == 16){
@@ -1099,78 +1158,6 @@ Word extractWordVertical(int x, int y, List<Position> posi, String[][] board1) {
     return word2;
 }
  
-/*List<Word> getAllWords(String[][] acutualBoard) {  //warum holt es sich nicht zusammenhängende Buchstaben als Würter, wenn sie in einer Reihe sind
-    List<Word> words = new ArrayList<>();
-    List<Position> positions = new ArrayList<>();
-    Word word = null;
-    StringBuilder w = new StringBuilder();
-    Position start = null;
-    Position end = null;
-    // Wörter aus Reihen extrahieren
-    for (int row = 0; row < acutualBoard.length; row++) {
-        for (int col = 0; col < acutualBoard[0].length; col++) {
-            String letter = acutualBoard[row][col];
-
-            if (!letter.equals("0")) {
-                if (w.length() == 0) {
-                    start = new Position(row, col);
-                }
-                if(col + 1 >= acutualBoard[row].length || acutualBoard[row][col+1].equals("0")){
-                    end = new Position(row, col);
-                }
-                w.append(letter);
-                positions.add(new Position(row, col));
-            } else if (w.length() > 1) {
-                word = new Word(w.toString(), start, end);
-                word.positions = positions;
-                words.add(word);
-                w.setLength(0);
-                positions = new ArrayList<>();
-            }
-        }
-        // Falls nach der letzten Spalte noch ein Wort übrig ist
-        if (w.length() > 1) {
-            word = new Word(w.toString(), start, end);
-            word.positions = positions;
-            words.add(word);
-        }
-        positions = new ArrayList<>();
-        w.setLength(0);
-    }
-    // Wörter aus Spalten extrahieren
-    for (int col = 0; col < acutualBoard[0].length; col++) {
-        for (int row = 0; row < acutualBoard.length; row++) {
-            String letter = acutualBoard[row][col];
-            if (!letter.equals("0")) {
-                if (w.length() == 0) {
-                    start = new Position(row, col);
-                }
-                if(col + 1 >= acutualBoard[col].length || acutualBoard[row+1][col].equals("0")){
-                    end = new Position(row, col);
-                }
-                w.append(letter);
-                positions.add(new Position(row, col));
-            } else if (w.length() > 1) {   
-                word = new Word(w.toString(), start, end);
-                word.positions = positions;
-                words.add(word);
-                w.setLength(0);
-                positions = new ArrayList<>();
-            }
-        }
-        // Falls nach der letzten Zeile noch ein Wort übrig ist
-        if (w.length() > 1) {
-            word = new Word(w.toString(), start, end);
-            word.positions = positions;
-            words.add(word);
-        }
-        positions = new ArrayList<>();
-        w.setLength(0);
-    }
-    return words;
-}*/
-
-
 List<Word> getWrongWords(List<Word> allWords, List<Word> words){
     List<Word> allWords2 = new ArrayList<>(allWords);
     List<Word> words2 = new ArrayList<>(words);
@@ -1218,20 +1205,7 @@ List<Word> getWrongWords(List<Word> allWords, List<Word> words){
     }
     return this.wrongWords;
 }
-/*
-List<Word> words = List.of(
-        new Word("apple", new Position(1, 2), new Position(3, 4)),
-        new Word("banana", new Position(5, 6), new Position(7, 8)),
-        new Word("cherry", new Position(9, 10), new Position(11, 12))
-    );
 
-    List<Word> allWords = List.of(
-        new Word("apple", new Position(1, 2), new Position(3, 4)),
-        new Word("banana", new Position(5, 6), new Position(7, 8)),
-        new Word("cherry", new Position(0, 0), new Position(0, 5)),
-        new Word("cherry", new Position(9, 10), new Position(11, 12))
-    );
- */
 boolean validateWord(String input) {
     // Großer Anfangsbuchstabe, kleiner Anfangsbuchstabe. Wenn eins von beiden passt, passts
     if(input.length() < 2){
@@ -1319,34 +1293,6 @@ String getRandWord(){
     Scrabble01(int width, int height) { this(Clerk.view(), width, height, new Player01(), new Player01(), new Bag()); }
     Scrabble01() { this(Clerk.view(), 600, 600, new Player01(), new Player01(), new Bag());}
 
-/* 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        StringBuilder bs = new StringBuilder();
-    
-        // currentBoard formatieren
-        sb.append("Current Board:\n");
-        for (int i = 0; i < this.currentBoard.length; i++) {
-            sb.append("  "); // Einrückung für jede Zeile
-            for (int j = 0; j < this.currentBoard[i].length; j++) {
-                sb.append(this.currentBoard[i][j]).append(" | ");  // Leerzeichen zwischen Zeichen
-            }
-            sb.append(" | "+ "\n"); // Neue Zeile nach jeder Reihe
-        }
-    
-        // board formatieren
-        bs.append("Board:\n");
-        for (int i = 0; i < this.board.length; i++) {
-            bs.append("  "); // Einrückung für jede Zeile
-            for (int j = 0; j < this.board[i].length; j++) {
-                bs.append(this.board[i][j]).append(" | ");  // Leerzeichen zwischen Zeichen
-            }
-            bs.append(" | "+ "\n"); // Neue Zeile nach jeder Reihe
-        }
-    
-        return sb.append("\n").append(bs).toString();
-    }*/
     @Override
     public String toString() {
         StringBuilder uboardString = new StringBuilder();
@@ -1393,6 +1339,4 @@ String getRandWord(){
                "\nCurrent Board:\n" + cboardString +
                "\nOriginal Board:\n" + boardString;
     }
-    
-
 } 

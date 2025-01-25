@@ -25,6 +25,7 @@ class Scrabble01{
         this.drawTilesTop();
         this.drawTilesBottom();
         this.drawSideBar();
+        //this.win("Spieler 1 gewinnt!");
         //this.error(0, 0, 0, 3);
         
         this.boardCanvas.addEventListener("click", (event) => {
@@ -47,7 +48,6 @@ class Scrabble01{
             for (let row = 0; row < this.gridSize; row++) {
                 for (let col = 0; col < this.gridSize; col++) {
                     this.ctxBoard.beginPath();
-                    console.log("drawrow: " + row + ", " + "col: " + col);
                     this.setColor(row, col);
                     this.setText(row, col);      
                 }
@@ -238,7 +238,7 @@ class Scrabble01{
         const textX = x * this.squareSize + this.squareSize / 3; 
         let textY = y * this.squareSize + (this.squareSize/ 1.5);
      
-        if(y < 15){
+        if(y < 18){
             textY = y * this.squareSize + (this.squareSize/ 1.5) + 8;
             this.ctxBoard.fillRect(x * this.squareSize , y * this.squareSize + 8, this.squareSize, this.squareSize);
             this.ctxBoard.strokeRect(x * this.squareSize, y * this.squareSize + 8, this.squareSize, this.squareSize);
@@ -267,7 +267,7 @@ class Scrabble01{
         }
     }
 
-    drawSideBar(){
+    drawSideBar(){ //Funktion noch generalisieren 
         let x = 16*this.squareSize;
         let y = 3*this.squareSize+8;
         this.ctxBoard.beginPath();
@@ -321,6 +321,14 @@ class Scrabble01{
         this.ctxBoard.fillStyle = "black";
         this.ctxBoard.fillText("ENGLSH", textX, textY);
 
+        y = 13*this.squareSize+8;
+        this.ctxBoard.strokeRect(x, y, 3 * this.squareSize, this.squareSize);
+        this.ctxBoard.fillStyle = "rgb(255, 192, 203)";
+        this.ctxBoard.fillRect(x, y, 3 * this.squareSize, this.squareSize);
+        textY = y + (this.squareSize/ 1.5); 
+        this.ctxBoard.fillStyle = "black";
+        this.ctxBoard.fillText("REPLACE", textX, textY);
+
         y = 16*this.squareSize+8;
         this.ctxBoard.strokeRect(x, y, 3 * this.squareSize, this.squareSize);
         this.ctxBoard.fillStyle = "rgb(219,112,147)";
@@ -328,6 +336,24 @@ class Scrabble01{
         textY = y + (this.squareSize/ 1.5); 
         this.ctxBoard.fillStyle = "black";
         this.ctxBoard.fillText("PLAY", textX, textY);
+
+        y = 19*this.squareSize+8;
+        this.ctxBoard.strokeRect(x, y, 3 * this.squareSize, this.squareSize);
+        this.ctxBoard.fillStyle = "rgba(192, 101, 49, 0.3)";
+        this.ctxBoard.fillRect(x, y, 3 * this.squareSize, this.squareSize);
+        textY = y + (this.squareSize/ 1.5); 
+        this.ctxBoard.fillStyle = "black";
+        this.ctxBoard.fillText("QUIT", textX, textY);
+    }
+    win(message){
+    const centerX = this.boardCanvas.width / 3;
+    const centerY = this.boardCanvas.height / 2; 
+
+    this.ctxBoard.font = "bold 30px verdana, sans-serif"; 
+    this.ctxBoard.fillStyle = "red"; 
+    this.ctxBoard.textAlign = "center"; 
+    this.ctxBoard.textBaseline = "middle"; 
+    this.ctxBoard.fillText(message, centerX, centerY);
     }
 
     error(startX, startY, endX, endY){
@@ -343,5 +369,31 @@ class Scrabble01{
             this.ctxBoard.fillRect(this.squareSize * startX, (this.squareSize * (startY + 3) + 8), this.squareSize * (endX-startX+1), this.squareSize);
         }
         this.ctxBoard.lineWidth = 2; 
+    }
+
+    helpMessage1(message){
+        const x = 7 * this.squareSize;
+        const y = this.squareSize;
+        const textY = (2*y) - (y/2);
+
+        this.ctxBoard.fillStyle = "rgb(250, 247, 247)"; 
+        this.ctxBoard.fillRect(x, y - (y/2), 8*this.squareSize, this.squareSize + 8);
+        this.ctxBoard.font = "20px verdana, sans-serif"; 
+        this.ctxBoard.fillStyle = "black"; 
+     
+        this.ctxBoard.fillText(message, x, textY);
+    }
+
+    helpMessage2(message){
+        const x = this.squareSize;
+        const y = 20 * this.squareSize;
+        const textY = (y) + (this.squareSize/2);
+
+        this.ctxBoard.fillStyle = "rgb(250, 247, 247)"; 
+        this.ctxBoard.fillRect(x, 20*this.squareSize, 8*this.squareSize, this.squareSize - 9);
+        this.ctxBoard.font = "20px verdana, sans-serif"; 
+        this.ctxBoard.fillStyle = "black"; 
+     
+        this.ctxBoard.fillText(message, x, textY);
     }
 }
